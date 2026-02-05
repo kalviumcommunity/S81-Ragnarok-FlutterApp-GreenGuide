@@ -1,1 +1,1 @@
-# S81-Ragnarok-s-FlutterApp-PlantPal
+# S81-Ragnarok-FlutterApp-GreenGuide
