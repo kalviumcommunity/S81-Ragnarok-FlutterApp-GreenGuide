@@ -1,0 +1,44 @@
+# Flutter
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+*.iml
+.idea/
+.vscode/
+
+# iOS
+ios/
+.ios/
+
+# Android
+android/
+.android/
+
+# Web
+web/
+
+# Desktop
+windows/
+macos/
+linux/
+
+# Generated code
+*.g.dart
+*.config.dart
+
+# Local env files
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# Dependencies
+pubspec.lock
+
+# OS
+.DS_Store
+Thumbs.db
