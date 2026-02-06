@@ -1,0 +1,19 @@
+name: greenguide
+description: "GreenGuide – Smart Plant Care Companion. A complete Flutter learning app demonstrating widget architecture, state management, and reactive UI updates."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
