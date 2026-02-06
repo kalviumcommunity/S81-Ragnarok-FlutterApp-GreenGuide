@@ -274,8 +274,8 @@ class _LoginScreenState extends State<LoginScreen> {
       final password = passwordController.text;
 
       // Fake validation
-      if (email == AppState().mockEmail &&
-          password == AppState().mockPassword) {
+      if (email == AppState.mockEmail &&
+          password == AppState.mockPassword) {
         AppState().loggedInUser = email;
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeScreen()),
