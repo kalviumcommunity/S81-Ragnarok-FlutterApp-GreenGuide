@@ -127,61 +127,81 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    // RESPONSIVE DESIGN: Get screen dimensions
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
+    
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.green.shade600,
-              ),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.eco,
-                    size: 60,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'GreenGuide',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // RESPONSIVE: Center form on large screens
+            return Center(
+              child: Container(
+                width: isTablet ? 500 : double.infinity,
+                child: Column(
+                  children: [
+                    // Header - responsive padding
+                    Container(
+                      padding: EdgeInsets.all(isTablet ? 32 : 20),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade600,
+                        borderRadius: isTablet 
+                          ? BorderRadius.only(
+                              topLeft: Radius.circular(16),
+                              topRight: Radius.circular(16),
+                            )
+                          : BorderRadius.zero,
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.eco,
+                            size: isTablet ? 80 : 60,
+                            color: Colors.white,
+                          ),
+                          SizedBox(height: isTablet ? 16 : 10),
+                          Text(
+                            'GreenGuide',
+                            style: TextStyle(
+                              fontSize: isTablet ? 40 : 32,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            'Smart Plant Care Companion',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: isTablet ? 16 : 14,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const Text(
-                    'Smart Plant Care Companion',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
+                    // Tabs
+                    TabBar(
+                      controller: _tabController,
+                      tabs: const [
+                        Tab(text: 'Login'),
+                        Tab(text: 'Sign Up'),
+                      ],
                     ),
-                  ),
-                ],
+                    // Tab content
+                    Expanded(
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [
+                          LoginTab(),
+                          SignupTab(),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            // Tabs
-            TabBar(
-              controller: _tabController,
-              tabs: const [
-                Tab(text: 'Login'),
-                Tab(text: 'Sign Up'),
-              ],
-            ),
-            // Tab content
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  LoginTab(),
-                  SignupTab(),
-                ],
-              ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -575,21 +595,44 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           }
 
-          // Plants list
+          // Plants list - RESPONSIVE GRID
           final plants = snapshot.data!;
-          return ListView.builder(
-            itemCount: plants.length,
-            itemBuilder: (context, index) {
-              final plant = plants[index];
-              return PlantListItem(
-                plant: plant,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          PlantDetailScreen(plant: plant, uid: user.uid),
-                    ),
+          
+          // RESPONSIVE: Get screen width to determine columns
+          final screenWidth = MediaQuery.of(context).size.width;
+          
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              // Calculate number of columns based on screen width
+              // Small phone: 1 column, Phone: 2 columns, Tablet: 3-4 columns
+              final crossAxisCount = screenWidth < 600 
+                ? 2  // Phone: 2 columns
+                : screenWidth < 900
+                  ? 3  // Small tablet: 3 columns
+                  : 4; // Large tablet/desktop: 4 columns
+              
+              return GridView.builder(
+                padding: EdgeInsets.all(screenWidth < 600 ? 8 : 16),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  childAspectRatio: 0.75,  // Card height/width ratio
+                  crossAxisSpacing: screenWidth < 600 ? 8 : 16,
+                  mainAxisSpacing: screenWidth < 600 ? 8 : 16,
+                ),
+                itemCount: plants.length,
+                itemBuilder: (context, index) {
+                  final plant = plants[index];
+                  return PlantGridItem(
+                    plant: plant,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              PlantDetailScreen(plant: plant, uid: user.uid),
+                        ),
+                      );
+                    },
                   );
                 },
               );
@@ -613,7 +656,115 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 // ============================================================================
-// PLANT LIST ITEM WIDGET
+// PLANT GRID ITEM WIDGET - RESPONSIVE CARD
+// ============================================================================
+
+class PlantGridItem extends StatelessWidget {
+  final Plant plant;
+  final VoidCallback onTap;
+
+  const PlantGridItem({
+    required this.plant,
+    required this.onTap,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // RESPONSIVE: Adjust font sizes based on screen width
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
+    
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Image - Fixed aspect ratio
+            Expanded(
+              flex: 3,
+              child: Container(
+                color: Colors.green.shade50,
+                child: plant.imageUrl.isNotEmpty
+                    ? Image.network(
+                        plant.imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Icon(Icons.local_florist,
+                              size: isSmallScreen ? 40 : 60, 
+                              color: Colors.green.shade300);
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
+                            ),
+                          );
+                        },
+                      )
+                    : Icon(Icons.local_florist,
+                        size: isSmallScreen ? 40 : 60, 
+                        color: Colors.green.shade300),
+              ),
+            ),
+            // Plant info
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Plant name - responsive font size
+                    Text(
+                      plant.name,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: isSmallScreen ? 14 : 16,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    // Watering info
+                    Row(
+                      children: [
+                        Icon(Icons.water_drop, 
+                          size: isSmallScreen ? 14 : 16, 
+                          color: Colors.blue.shade400),
+                        SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            '${plant.wateringCount}x',
+                            style: TextStyle(
+                              color: Colors.grey.shade700,
+                              fontSize: isSmallScreen ? 12 : 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// PLANT LIST ITEM WIDGET - For list view (kept for backward compatibility)
 // ============================================================================
 
 class PlantListItem extends StatelessWidget {
