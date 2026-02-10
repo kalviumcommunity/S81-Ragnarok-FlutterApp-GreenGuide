@@ -1,142 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'services/auth_service.dart';
+import 'services/firestore_service.dart';
+import 'services/storage_service.dart';
 
 /*
 ==============================================================================
   GreenGuide – Smart Plant Care Companion
-  A complete Flutter learning app demonstrating widget architecture,
-  state management, and reactive UI updates.
+  Firebase-Integrated Edition
+  
+  Complete Flutter app with:
+  - Firebase Authentication (email/password signup & login)
+  - Cloud Firestore for real-time plant data sync
+  - Firebase Storage for plant images
+  - StreamBuilder for reactive UI updates
+  - Material 3 design with green theme
+  
+  Architecture:
+  - lib/services/ - Business logic (auth, firestore, storage)
+  - screens in main.dart - UI layer
+  - Firebase handles all backend operations
+  
+  Real-time Magic:
+  - Plants added on phone appear instantly on tablet
+  - No polling needed - Firestore streams push updates
+  - Images stored globally on Firebase CDN
+  
+  The "Mobile Efficiency Triangle": Real-time sync + Secure auth + Scalable storage
+  Firebase solves all three problems without custom backend servers.
 ==============================================================================
 */
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const GreenGuideApp());
 }
 
 // ============================================================================
-// DATA MODELS
-// ============================================================================
-
-/// Plant model representing a plant with care information.
-/// This simulates data that would come from a database/Firebase later.
-class Plant {
-  final String id;
-  final String name;
-  final String watering; // e.g., "Every 3 days"
-  final String sunlight; // e.g., "Indirect, 6-8 hours"
-  final String fertilizer; // e.g., "Monthly with balanced NPK"
-  final String repotting; // e.g., "Every 12-18 months"
-  final List<String> problems; // Common issues
-
-  Plant({
-    required this.id,
-    required this.name,
-    required this.watering,
-    required this.sunlight,
-    required this.fertilizer,
-    required this.repotting,
-    required this.problems,
-  });
-}
-
-/// Product model representing nursery store items.
-class Product {
-  final String id;
-  final String name;
-  final double price;
-
-  const Product({
-    required this.id,
-    required this.name,
-    required this.price,
-  });
-}
-
-/// User-added plant with watering count tracking.
-class UserPlant {
-  final Plant plant;
-  int wateredCount;
-
-  UserPlant({
-    required this.plant,
-    this.wateredCount = 0,
-  });
-}
-
-// ============================================================================
-// GLOBAL APP STATE (Simulated Firebase)
-// ============================================================================
-
-/// In-memory data storage simulating a database.
-class AppState {
-  static final AppState _instance = AppState._internal();
-
-  factory AppState() {
-    return _instance;
-  }
-
-  AppState._internal();
-
-  // Mock user credentials for login
-  static const String mockEmail = "user@greenguide.com";
-  static const String mockPassword = "password123";
-
-  // Sample plants database
-  final List<Plant> samplePlants = [
-    Plant(
-      id: "1",
-      name: "Snake Plant",
-      watering: "Every 2-3 weeks",
-      sunlight: "Indirect, 6-8 hours",
-      fertilizer: "Monthly during growing season",
-      repotting: "Every 2-3 years",
-      problems: ["Yellow leaves (overwatering)", "Brown tips (low humidity)"],
-    ),
-    Plant(
-      id: "2",
-      name: "Aloe Vera",
-      watering: "Every 3-4 weeks",
-      sunlight: "Bright, 6+ hours",
-      fertilizer: "Quarterly with cactus fertilizer",
-      repotting: "Every 12-18 months",
-      problems: ["Translucent leaves (overwatering)", "Pale color (low light)"],
-    ),
-    Plant(
-      id: "3",
-      name: "Rose",
-      watering: "Daily (1-2 inches per week)",
-      sunlight: "Direct, 6+ hours",
-      fertilizer: "Bi-weekly during blooming",
-      repotting: "Annually in spring",
-      problems: ["Powdery mildew", "Aphids", "Black spots on leaves"],
-    ),
-  ];
-
-  // Store products
-  final List<Product> storeProducts = [
-    const Product(id: "p1", name: "Premium Soil Mix", price: 12.99),
-    const Product(id: "p2", name: "Liquid Fertilizer (500ml)", price: 8.49),
-    const Product(id: "p3", name: "Ceramic Pot (8\")", price: 15.99),
-    const Product(id: "p4", name: "Perlite (2L)", price: 7.99),
-    const Product(id: "p5", name: "NPK Granules", price: 9.99),
-  ];
-
-  // User's plants list
-  final List<UserPlant> userPlants = [];
-
-  // Mock reminders
-  final List<String> reminders = [
-    "🌱 Snake Plant needs watering (Last watered 2 days ago)",
-    "💧 Aloe Vera check soil moisture",
-    "🌹 Rose needs fertilizer this week",
-    "🪴 Snake Plant due for repotting in 6 months",
-  ];
-
-  // Mock user data
-  String? loggedInUser;
-}
-
-// ============================================================================
-// MAIN APP WIDGET
+// MAIN APP
 // ============================================================================
 
 class GreenGuideApp extends StatelessWidget {
@@ -146,110 +51,259 @@ class GreenGuideApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'GreenGuide',
-      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.green,
           brightness: Brightness.light,
         ),
-        appBarTheme: const AppBarTheme(
-          elevation: 0,
-          centerTitle: true,
-        ),
       ),
-      home: const SplashScreen(),
+      home: const AuthWrapper(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
 
 // ============================================================================
-// SCREEN 1: SPLASH SCREEN (StatelessWidget)
+// AUTH WRAPPER - Routes based on Firebase Auth state
 // ============================================================================
 
-/// Displays the GreenGuide logo and auto-navigates after 2 seconds.
-/// This is a StatelessWidget because it has no internal state changes.
-class SplashScreen extends StatelessWidget {
-  const SplashScreen({super.key});
+/// Wrapper that decides which screen to show based on authentication state.
+/// 
+/// This uses StreamBuilder to listen to Firebase Auth state changes.
+/// When user logs in/out, the UI automatically updates.
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Trigger navigation after 2 seconds using Future.delayed
-    Future.delayed(const Duration(seconds: 2), () {
-      if (context.mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-        );
-      }
-    });
+    return StreamBuilder<User?>(
+      stream: AuthService().authStateChanges,
+      builder: (context, snapshot) {
+        // Loading state
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Colors.green.shade400, Colors.green.shade800],
-          ),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.eco,
-                size: 80,
-                color: Colors.white,
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'GreenGuide',
-                style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Smart Plant Care Companion',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white.withOpacity(0.8),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+        // User is logged in
+        if (snapshot.hasData) {
+          return const HomeScreen();
+        }
+
+        // User is not logged in
+        return const AuthScreen();
+      },
     );
   }
 }
 
 // ============================================================================
-// SCREEN 2: LOGIN SCREEN (StatefulWidget)
+// SCREEN 1: AUTH SCREEN (Login/Signup tabs)
 // ============================================================================
 
-/// Login screen with email and password fields.
-/// This is a StatefulWidget because we track form input changes via setState().
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class AuthScreen extends StatefulWidget {
+  const AuthScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  // Form controllers for email and password input
-  late TextEditingController emailController;
-  late TextEditingController passwordController;
-  bool isLoading = false;
+class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    emailController = TextEditingController();
-    passwordController = TextEditingController();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.green.shade600,
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.eco,
+                    size: 60,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'GreenGuide',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const Text(
+                    'Smart Plant Care Companion',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Tabs
+            TabBar(
+              controller: _tabController,
+              tabs: const [
+                Tab(text: 'Login'),
+                Tab(text: 'Sign Up'),
+              ],
+            ),
+            // Tab content
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  LoginTab(),
+                  SignupTab(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// LOGIN TAB
+// ============================================================================
+
+class LoginTab extends StatefulWidget {
+  @override
+  State<LoginTab> createState() => _LoginTabState();
+}
+
+class _LoginTabState extends State<LoginTab> {
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final AuthService authService = AuthService();
+  bool isLoading = false;
+  String? errorMessage;
+
+  void _handleLogin() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      await authService.login(
+        email: emailController.text.trim(),
+        password: passwordController.text,
+      );
+      // Navigation handled by AuthWrapper stream
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          errorMessage = e.toString();
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          const SizedBox(height: 30),
+          TextField(
+            controller: emailController,
+            decoration: InputDecoration(
+              labelText: 'Email',
+              prefixIcon: const Icon(Icons.email),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            keyboardType: TextInputType.emailAddress,
+            enabled: !isLoading,
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: passwordController,
+            decoration: InputDecoration(
+              labelText: 'Password',
+              prefixIcon: const Icon(Icons.lock),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            obscureText: true,
+            enabled: !isLoading,
+          ),
+          if (errorMessage != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                border: Border.all(color: Colors.red),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                errorMessage!,
+                style: TextStyle(color: Colors.red.shade700),
+              ),
+            ),
+          ],
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: isLoading ? null : _handleLogin,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green.shade600,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              child: isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Text(
+                      'Login',
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -258,254 +312,366 @@ class _LoginScreenState extends State<LoginScreen> {
     passwordController.dispose();
     super.dispose();
   }
+}
 
-  /// Fake login logic - validates against mock credentials
-  /// setState() is called to show loading state
-  void _handleLogin() {
+// ============================================================================
+// SIGNUP TAB
+// ============================================================================
+
+class SignupTab extends StatefulWidget {
+  @override
+  State<SignupTab> createState() => _SignupTabState();
+}
+
+class _SignupTabState extends State<SignupTab> {
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
+  final AuthService authService = AuthService();
+  final FirestoreService firestoreService = FirestoreService();
+  bool isLoading = false;
+  String? errorMessage;
+
+  void _handleSignup() async {
+    // Validate
+    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+      setState(() => errorMessage = 'Email and password required');
+      return;
+    }
+
+    if (passwordController.text != confirmPasswordController.text) {
+      setState(() => errorMessage = 'Passwords do not match');
+      return;
+    }
+
+    if (passwordController.text.length < 6) {
+      setState(() => errorMessage = 'Password must be at least 6 characters');
+      return;
+    }
+
     setState(() {
       isLoading = true;
+      errorMessage = null;
     });
 
-    // Simulate network delay
-    Future.delayed(const Duration(seconds: 1), () {
-      if (!mounted) return;
+    try {
+      final credential = await authService.signUp(
+        email: emailController.text.trim(),
+        password: passwordController.text,
+      );
 
-      final email = emailController.text;
-      final password = passwordController.text;
-
-      // Fake validation
-      if (email == AppState().mockEmail &&
-          password == AppState().mockPassword) {
-        AppState().loggedInUser = email;
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+      // Create user document in Firestore
+      if (credential.user != null) {
+        await firestoreService.createUserDocument(
+          credential.user!.uid,
+          credential.user!.email ?? '',
         );
-      } else {
+      }
+
+      // Navigation handled by AuthWrapper stream
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          errorMessage = e.toString();
+        });
+      }
+    } finally {
+      if (mounted) {
         setState(() {
           isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid credentials')),
-        );
       }
-    });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login'),
-        backgroundColor: Colors.green.shade600,
-        foregroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(height: 40),
-            Icon(
-              Icons.eco,
-              size: 60,
-              color: Colors.green.shade600,
-            ),
-            const SizedBox(height: 30),
-            TextField(
-              controller: emailController,
-              decoration: InputDecoration(
-                labelText: 'Email',
-                hintText: 'user@greenguide.com',
-                prefixIcon: const Icon(Icons.email),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              keyboardType: TextInputType.emailAddress,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: passwordController,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                hintText: 'password123',
-                prefixIcon: const Icon(Icons.lock),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              obscureText: true,
-            ),
-            const SizedBox(height: 30),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: isLoading ? null : _handleLogin,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade600,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : const Text(
-                        'Login',
-                        style: TextStyle(fontSize: 16),
-                      ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          TextField(
+            controller: emailController,
+            decoration: InputDecoration(
+              labelText: 'Email',
+              prefixIcon: const Icon(Icons.email),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Demo Credentials:\nEmail: user@greenguide.com\nPassword: password123',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey.shade600,
+            keyboardType: TextInputType.emailAddress,
+            enabled: !isLoading,
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: passwordController,
+            decoration: InputDecoration(
+              labelText: 'Password',
+              prefixIcon: const Icon(Icons.lock),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            obscureText: true,
+            enabled: !isLoading,
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: confirmPasswordController,
+            decoration: InputDecoration(
+              labelText: 'Confirm Password',
+              prefixIcon: const Icon(Icons.lock),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            obscureText: true,
+            enabled: !isLoading,
+          ),
+          if (errorMessage != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                border: Border.all(color: Colors.red),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                errorMessage!,
+                style: TextStyle(color: Colors.red.shade700),
               ),
             ),
           ],
-        ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: isLoading ? null : _handleSignup,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green.shade600,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              child: isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Text(
+                      'Sign Up',
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Password must be at least 6 characters',
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
   }
 }
 
 // ============================================================================
-// SCREEN 3: HOME SCREEN (StatelessWidget)
+// SCREEN 2: HOME SCREEN (Real-time plant list with StreamBuilder)
 // ============================================================================
 
-/// Home screen displaying "My Plants" list with BottomNavigationBar.
-/// This is a StatelessWidget because navigation is handled by this widget
-/// passing to other StatefulWidgets that manage their own state.
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final FirestoreService firestoreService = FirestoreService();
+  final AuthService authService = AuthService();
+
+  @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('GreenGuide'),
-          backgroundColor: Colors.green.shade600,
-          foregroundColor: Colors.white,
-        ),
-        body: _buildTabContent(context, 0),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.notifications),
-              label: 'Reminders',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.store),
-              label: 'Store',
-            ),
-          ],
-          onTap: (index) {
-            if (index == 1) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const RemindersScreen()),
-              );
-            } else if (index == 2) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const StoreScreen()),
-              );
-            }
-          },
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AddPlantScreen()),
-            );
-          },
-          backgroundColor: Colors.green.shade600,
-          child: const Icon(Icons.add),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTabContent(BuildContext context, int tabIndex) {
-    final userPlants = AppState().userPlants;
-
-    if (userPlants.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.eco,
-              size: 64,
-              color: Colors.grey.shade400,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No plants yet',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Tap + to add your first plant',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade500,
-              ),
-            ),
-          ],
-        ),
-      );
+    final user = authService.currentUser;
+    if (user == null) {
+      return const Scaffold(body: Center(child: Text('Not logged in')));
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(12),
-      itemCount: userPlants.length,
-      itemBuilder: (context, index) {
-        final userPlant = userPlants[index];
-        return PlantTile(
-          userPlant: userPlant,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    PlantDetailScreen(userPlant: userPlant),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('My Plants'),
+        backgroundColor: Colors.green.shade600,
+        foregroundColor: Colors.white,
+        actions: [
+          PopupMenuButton(
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                onTap: () async {
+                  await authService.logout();
+                },
+                child: const Text('Logout'),
+              ),
+            ],
+          ),
+        ],
+      ),
+      body: StreamBuilder<List<Plant>>(
+        stream: firestoreService.getPlantsStream(user.uid),
+        builder: (context, snapshot) {
+          // Loading state
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          // Error state
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          // Empty state
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.local_florist_outlined,
+                      size: 80, color: Colors.grey.shade400),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No plants yet',
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 18),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AddPlantScreen(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add Your First Plant'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green.shade600,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
               ),
             );
-          },
-        );
-      },
+          }
+
+          // Plants list
+          final plants = snapshot.data!;
+          return ListView.builder(
+            itemCount: plants.length,
+            itemBuilder: (context, index) {
+              final plant = plants[index];
+              return PlantListItem(
+                plant: plant,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          PlantDetailScreen(plant: plant, uid: user.uid),
+                    ),
+                  );
+                },
+              );
+            },
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddPlantScreen()),
+          );
+        },
+        icon: const Icon(Icons.add),
+        label: const Text('Add Plant'),
+        backgroundColor: Colors.green.shade600,
+      ),
     );
   }
 }
 
 // ============================================================================
-// SCREEN 4: ADD PLANT SCREEN (StatefulWidget)
+// PLANT LIST ITEM WIDGET
 // ============================================================================
 
-/// Screen for adding a plant to "My Plants".
-/// This is a StatefulWidget because it manages the selected plant dropdown
-/// and user input fields via setState().
+class PlantListItem extends StatelessWidget {
+  final Plant plant;
+  final VoidCallback onTap;
+
+  const PlantListItem({
+    required this.plant,
+    required this.onTap,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.all(12),
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(16),
+        leading: Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.green.shade100,
+          ),
+          child: plant.imageUrl.isNotEmpty
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    plant.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(Icons.local_florist,
+                          color: Colors.green.shade600);
+                    },
+                  ),
+                )
+              : Icon(Icons.local_florist, color: Colors.green.shade600),
+        ),
+        title: Text(
+          plant.name,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(
+          'Watered ${plant.wateringCount} times',
+          style: TextStyle(color: Colors.grey.shade600),
+        ),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        onTap: onTap,
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// SCREEN 3: ADD PLANT SCREEN
+// ============================================================================
+
 class AddPlantScreen extends StatefulWidget {
   const AddPlantScreen({super.key});
 
@@ -514,42 +680,103 @@ class AddPlantScreen extends StatefulWidget {
 }
 
 class _AddPlantScreenState extends State<AddPlantScreen> {
-  Plant? selectedPlant;
-  late TextEditingController searchController;
-  late TextEditingController plantCodeController;
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController wateringController = TextEditingController();
+  final TextEditingController sunlightController = TextEditingController();
+  final TextEditingController fertilizerController = TextEditingController();
+  final TextEditingController repottingController = TextEditingController();
+  final TextEditingController problemsController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    searchController = TextEditingController();
-    plantCodeController = TextEditingController();
+  final FirestoreService firestoreService = FirestoreService();
+  final StorageService storageService = StorageService();
+  final ImagePicker imagePicker = ImagePicker();
+  final AuthService authService = AuthService();
+
+  File? selectedImage;
+  bool isLoading = false;
+
+  void _pickImage() async {
+    final pickedFile = await imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+
+    if (pickedFile != null) {
+      setState(() {
+        selectedImage = File(pickedFile.path);
+      });
+    }
   }
 
-  @override
-  void dispose() {
-    searchController.dispose();
-    plantCodeController.dispose();
-    super.dispose();
-  }
+  void _handleAddPlant() async {
+    final user = authService.currentUser;
+    if (user == null) return;
 
-  /// Add selected plant to user's collection.
-  /// setState() is NOT called here because we navigate away after adding.
-  void _addPlant() {
-    if (selectedPlant == null) {
+    if (nameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a plant')),
+        const SnackBar(content: Text('Plant name required')),
       );
       return;
     }
 
-    // Add to user's plants
-    AppState().userPlants.add(UserPlant(plant: selectedPlant!));
+    setState(() => isLoading = true);
 
-    // Navigate back and show confirmation
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${selectedPlant!.name} added to your collection!')),
-    );
+    try {
+      // Create plant object
+      var plant = Plant(
+        id: '', // Firestore will generate ID
+        name: nameController.text,
+        watering: wateringController.text.isEmpty
+            ? 'As needed'
+            : wateringController.text,
+        sunlight: sunlightController.text.isEmpty
+            ? 'Bright indirect'
+            : sunlightController.text,
+        fertilizer: fertilizerController.text.isEmpty
+            ? 'Monthly'
+            : fertilizerController.text,
+        repotting: repottingController.text.isEmpty
+            ? 'Every 12-18 months'
+            : repottingController.text,
+        problems: problemsController.text.isEmpty
+            ? 'None'
+            : problemsController.text,
+      );
+
+      // Add plant to Firestore
+      final plantId = await firestoreService.addPlant(user.uid, plant);
+
+      // Upload image if selected
+      if (selectedImage != null) {
+        final imageUrl = await storageService.uploadPlantImage(
+          uid: user.uid,
+          plantId: plantId,
+          imageFile: selectedImage!,
+        );
+
+        // Update plant with image URL
+        await firestoreService.updatePlant(user.uid, plantId, {
+          'imageUrl': imageUrl,
+        });
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Plant added successfully!')),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
+    }
   }
 
   @override
@@ -561,111 +788,136 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Search by name
-            const Text(
-              'Search or Select Plant',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: searchController,
-              decoration: InputDecoration(
-                hintText: 'Search plant name...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+            // Image section
+            Container(
+              width: double.infinity,
+              height: 200,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(12),
               ),
-            ),
-            const SizedBox(height: 20),
-
-            // Plant code input
-            const Text(
-              'Plant Code (Optional)',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: plantCodeController,
-              decoration: InputDecoration(
-                hintText: 'Enter plant code (e.g., SP001)',
-                prefixIcon: const Icon(Icons.qr_code),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Dropdown for sample plants
-            const Text(
-              'Sample Plants',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            DropdownButton<Plant>(
-              isExpanded: true,
-              hint: const Text('Select a plant'),
-              value: selectedPlant,
-              items: AppState()
-                  .samplePlants
-                  .map(
-                    (plant) => DropdownMenuItem(
-                      value: plant,
-                      child: Text(plant.name),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (plant) {
-                setState(() {
-                  selectedPlant = plant;
-                });
-              },
-            ),
-            const SizedBox(height: 30),
-
-            // Display selected plant info
-            if (selectedPlant != null)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade50,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.green.shade300),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      selectedPlant!.name,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+              child: selectedImage != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.file(selectedImage!, fit: BoxFit.cover),
+                    )
+                  : Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.image_outlined,
+                              size: 48, color: Colors.grey.shade400),
+                          const SizedBox(height: 8),
+                          Text('No image selected',
+                              style: TextStyle(color: Colors.grey.shade600)),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    _buildInfoRow('Watering:', selectedPlant!.watering),
-                    _buildInfoRow('Sunlight:', selectedPlant!.sunlight),
-                  ],
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: _pickImage,
+              icon: const Icon(Icons.photo_camera),
+              label: const Text('Pick Image'),
+            ),
+            const SizedBox(height: 24),
+            // Form fields
+            TextField(
+              controller: nameController,
+              decoration: InputDecoration(
+                labelText: 'Plant Name',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
-            const SizedBox(height: 30),
-
-            // Add button
+              enabled: !isLoading,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: wateringController,
+              decoration: InputDecoration(
+                labelText: 'Watering Schedule',
+                hintText: 'e.g., Every 3 days',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              enabled: !isLoading,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: sunlightController,
+              decoration: InputDecoration(
+                labelText: 'Sunlight Requirements',
+                hintText: 'e.g., Bright indirect',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              enabled: !isLoading,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: fertilizerController,
+              decoration: InputDecoration(
+                labelText: 'Fertilizer',
+                hintText: 'e.g., Monthly',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              enabled: !isLoading,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: repottingController,
+              decoration: InputDecoration(
+                labelText: 'Repotting Schedule',
+                hintText: 'e.g., Every 12-18 months',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              enabled: !isLoading,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: problemsController,
+              decoration: InputDecoration(
+                labelText: 'Common Problems',
+                hintText: 'e.g., None',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              enabled: !isLoading,
+              maxLines: 3,
+            ),
+            const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _addPlant,
+                onPressed: isLoading ? null : _handleAddPlant,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green.shade600,
-                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: const Text('Add to My Plants'),
+                child: isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Text(
+                        'Add Plant',
+                        style: TextStyle(color: Colors.white, fontSize: 16),
+                      ),
               ),
             ),
           ],
@@ -674,38 +926,30 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(value),
-          ),
-        ],
-      ),
-    );
+  @override
+  void dispose() {
+    nameController.dispose();
+    wateringController.dispose();
+    sunlightController.dispose();
+    fertilizerController.dispose();
+    repottingController.dispose();
+    problemsController.dispose();
+    super.dispose();
   }
 }
 
 // ============================================================================
-// SCREEN 5: PLANT DETAIL SCREEN (StatefulWidget)
+// SCREEN 4: PLANT DETAIL SCREEN
 // ============================================================================
 
-/// Displays detailed care information for a plant.
-/// This is a StatefulWidget because it tracks wateredCount and rebuilds
-/// only the WaterCounterWidget when setState() is called.
 class PlantDetailScreen extends StatefulWidget {
-  final UserPlant userPlant;
+  final Plant plant;
+  final String uid;
 
   const PlantDetailScreen({
+    required this.plant,
+    required this.uid,
     super.key,
-    required this.userPlant,
   });
 
   @override
@@ -713,264 +957,236 @@ class PlantDetailScreen extends StatefulWidget {
 }
 
 class _PlantDetailScreenState extends State<PlantDetailScreen> {
-  /// When "Mark as Watered" is tapped, setState() is called.
-  /// This triggers a rebuild of the widget tree, but Flutter's diffing algorithm
-  /// only rebuilds the WaterCounterWidget (and this state) due to const constructors
-  /// on other widgets.
-  void _markAsWatered() {
-    setState(() {
-      widget.userPlant.wateredCount++;
-    });
-  }
+  final FirestoreService firestoreService = FirestoreService();
+  final StorageService storageService = StorageService();
+  final ImagePicker imagePicker = ImagePicker();
+  late Plant currentPlant;
+  bool isLoading = false;
 
   @override
-  Widget build(BuildContext context) {
-    final plant = widget.userPlant.plant;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(plant.name),
-        backgroundColor: Colors.green.shade600,
-        foregroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Plant name and watering counter
-            PlantInfoCard(plant: plant),
-            const SizedBox(height: 20),
-
-            // Water counter widget (stateful)
-            WaterCounterWidget(
-              wateredCount: widget.userPlant.wateredCount,
-              onWatered: _markAsWatered,
-            ),
-            const SizedBox(height: 20),
-
-            // Care information cards (const, no rebuilds)
-            const Text(
-              'Care Information',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            _buildCareCard('💧 Watering', plant.watering),
-            _buildCareCard('☀️ Sunlight', plant.sunlight),
-            _buildCareCard('🌿 Fertilizer', plant.fertilizer),
-            _buildCareCard('🪴 Repotting', plant.repotting),
-            const SizedBox(height: 20),
-
-            // Common problems
-            const Text(
-              'Common Problems',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            ...plant.problems
-                .map((problem) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.warning, color: Colors.orange),
-                          const SizedBox(width: 12),
-                          Expanded(child: Text(problem)),
-                        ],
-                      ),
-                    ))
-                .toList(),
-          ],
-        ),
-      ),
-    );
+  void initState() {
+    super.initState();
+    currentPlant = widget.plant;
   }
 
-  Widget _buildCareCard(String title, String description) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(description),
-          ],
-        ),
-      ),
-    );
+  void _waterPlant() async {
+    setState(() => isLoading = true);
+
+    try {
+      await firestoreService.incrementWateringCount(widget.uid, widget.plant.id);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
+    }
   }
-}
 
-// ============================================================================
-// SCREEN 6: REMINDERS SCREEN (StatelessWidget)
-// ============================================================================
+  void _updatePlantImage() async {
+    final pickedFile = await imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
 
-/// Displays watering reminders.
-/// This is a StatelessWidget because it only displays mock reminder data
-/// with no internal state changes.
-class RemindersScreen extends StatelessWidget {
-  const RemindersScreen({super.key});
+    if (pickedFile != null) {
+      setState(() => isLoading = true);
 
-  @override
-  Widget build(BuildContext context) {
-    final reminders = AppState().reminders;
+      try {
+        final imageUrl = await storageService.uploadPlantImage(
+          uid: widget.uid,
+          plantId: widget.plant.id,
+          imageFile: File(pickedFile.path),
+        );
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Reminders'),
-        backgroundColor: Colors.green.shade600,
-        foregroundColor: Colors.white,
-      ),
-      body: reminders.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.done_all,
-                    size: 64,
-                    color: Colors.green.shade400,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'All caught up!',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: reminders.length,
-              itemBuilder: (context, index) {
-                return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  child: ListTile(
-                    leading: Icon(
-                      Icons.notifications_active,
-                      color: Colors.green.shade600,
-                    ),
-                    title: Text(reminders[index]),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () {
-                        // Remove reminder
-                        AppState().reminders.removeAt(index);
-                        (context as Element).reassemble();
-                      },
-                    ),
-                  ),
+        await firestoreService.updatePlant(
+          widget.uid,
+          widget.plant.id,
+          {'imageUrl': imageUrl},
+        );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Image updated!')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e')),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => isLoading = false);
+        }
+      }
+    }
+  }
+
+  void _deletePlant() async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Plant?'),
+        content: const Text('This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              setState(() => isLoading = true);
+
+              try {
+                // Delete image from Storage
+                if (widget.plant.imageUrl.isNotEmpty) {
+                  await storageService.deleteImage(
+                    uid: widget.uid,
+                    plantId: widget.plant.id,
+                  );
+                }
+
+                // Delete plant from Firestore
+                await firestoreService.deletePlant(
+                  widget.uid,
+                  widget.plant.id,
                 );
-              },
-            ),
+
+                if (mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Plant deleted!')),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e')),
+                  );
+                  setState(() => isLoading = false);
+                }
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
     );
   }
-}
-
-// ============================================================================
-// SCREEN 7: STORE SCREEN (StatelessWidget)
-// ============================================================================
-
-/// Displays nursery products.
-/// This is a StatelessWidget because it only shows product information
-/// with no internal state changes.
-class StoreScreen extends StatelessWidget {
-  const StoreScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final products = AppState().storeProducts;
+    return StreamBuilder<Plant?>(
+      stream: Stream.value(currentPlant), // Start with current plant
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Plant Details')),
+            body: Center(child: Text('Error: ${snapshot.error}')),
+          );
+        }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Store'),
-        backgroundColor: Colors.green.shade600,
-        foregroundColor: Colors.white,
-      ),
-      body: GridView.builder(
-        padding: const EdgeInsets.all(12),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 0.8,
-        ),
-        itemCount: products.length,
-        itemBuilder: (context, index) {
-          final product = products[index];
-          return Card(
+        final plant = snapshot.data ?? currentPlant;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Plant Details'),
+            backgroundColor: Colors.green.shade600,
+            foregroundColor: Colors.white,
+            actions: [
+              IconButton(
+                onPressed: isLoading ? null : _deletePlant,
+                icon: const Icon(Icons.delete),
+              ),
+            ],
+          ),
+          body: SingleChildScrollView(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Container(
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade100,
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.shopping_bag,
-                      size: 48,
-                      color: Colors.green.shade600,
-                    ),
+                // Image
+                GestureDetector(
+                  onTap: isLoading ? null : _updatePlantImage,
+                  child: Container(
+                    height: 250,
+                    color: Colors.grey.shade200,
+                    child: plant.imageUrl.isNotEmpty
+                        ? Image.network(
+                            plant.imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(Icons.local_florist,
+                                  size: 80, color: Colors.grey.shade400);
+                            },
+                          )
+                        : Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add_photo_alternate_outlined,
+                                    size: 64, color: Colors.grey.shade400),
+                                const SizedBox(height: 8),
+                                Text('Tap to add image',
+                                    style: TextStyle(
+                                        color: Colors.grey.shade600)),
+                              ],
+                            ),
+                          ),
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        product.name,
+                        plant.name,
                         style: const TextStyle(
+                          fontSize: 28,
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '\$${product.price.toStringAsFixed(2)}',
+                        'Watered ${plant.wateringCount} times',
                         style: TextStyle(
-                          color: Colors.green.shade600,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                          color: Colors.grey.shade600,
+                          fontSize: 14,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      if (plant.lastWatered != null)
+                        Text(
+                          'Last watered: ${plant.lastWatered!.toString().split('.')[0]}',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      const SizedBox(height: 24),
+                      // Care instructions
+                      _buildCareSection('Watering', plant.watering),
+                      _buildCareSection('Sunlight', plant.sunlight),
+                      _buildCareSection('Fertilizer', plant.fertilizer),
+                      _buildCareSection('Repotting', plant.repotting),
+                      _buildCareSection('Problems', plant.problems),
+                      const SizedBox(height: 24),
+                      // Water button
                       SizedBox(
                         width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content:
-                                    Text('${product.name} added to cart!'),
-                              ),
-                            );
-                          },
+                        child: ElevatedButton.icon(
+                          onPressed: isLoading ? null : _waterPlant,
+                          icon: const Icon(Icons.opacity),
+                          label: const Text('Mark as Watered'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green.shade600,
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                          ),
-                          child: const Text(
-                            'Add',
-                            style: TextStyle(fontSize: 12),
+                            backgroundColor: Colors.blue.shade600,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                         ),
                       ),
@@ -979,560 +1195,30 @@ class StoreScreen extends StatelessWidget {
                 ),
               ],
             ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-// ============================================================================
-// SUPPORTING WIDGETS
-// ============================================================================
-
-/// Displays a plant tile in the My Plants list.
-/// This is a const StatelessWidget for efficient list rendering.
-class PlantTile extends StatelessWidget {
-  final UserPlant userPlant;
-  final VoidCallback onTap;
-
-  const PlantTile({
-    super.key,
-    required this.userPlant,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: ListTile(
-        leading: Icon(
-          Icons.eco,
-          color: Colors.green.shade600,
-          size: 32,
-        ),
-        title: Text(
-          userPlant.plant.name,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(
-          'Watered ${userPlant.wateredCount} times',
-        ),
-        trailing: Icon(
-          Icons.arrow_forward,
-          color: Colors.grey.shade400,
-        ),
-        onTap: onTap,
-      ),
-    );
-  }
-}
-
-/// Displays plant information in a card format.
-/// This is a const StatelessWidget.
-class PlantInfoCard extends StatelessWidget {
-  final Plant plant;
-
-  const PlantInfoCard({
-    super.key,
-    required this.plant,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.green.shade100, Colors.green.shade50],
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              plant.name,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              plant.watering,
-              style: TextStyle(
-                color: Colors.grey.shade700,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Water counter widget - tracks watering count and triggers setState.
-/// This is a const StatelessWidget that receives its state from parent.
-class WaterCounterWidget extends StatelessWidget {
-  final int wateredCount;
-  final VoidCallback onWatered;
-
-  const WaterCounterWidget({
-    super.key,
-    required this.wateredCount,
-    required this.onWatered,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.blue.shade300),
-      ),
-      child: Column(
-        children: [
-          Text(
-            'Times Watered',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.blue.shade800,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            wateredCount.toString(),
-            style: TextStyle(
-              fontSize: 48,
-              fontWeight: FontWeight.bold,
-              color: Colors.blue.shade600,
-            ),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: onWatered,
-            icon: const Icon(Icons.water_drop),
-            label: const Text('Mark as Watered'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue.shade600,
-              foregroundColor: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ============================================================================
-// COMPREHENSIVE DOCUMENTATION
-// ============================================================================
-
-/*
-====================================================================
-  README + VIDEO ANSWER NOTES: GreenGuide Architecture & Flutter
-====================================================================
-
-═══════════════════════════════════════════════════════════════════
-1. FLUTTER'S WIDGET-BASED ARCHITECTURE & SKIA ENGINE
-═══════════════════════════════════════════════════════════════════
-
-Flutter is built on a reactive, widget-based framework that compiles
-directly to native code using the Skia graphics engine.
-
-WHY SKIA?
-  • Skia is Google's 2D graphics library (used in Chrome, Android)
-  • Draws pixels directly on the GPU
-  • Eliminates the native UI framework layer (no WebView, no custom widgets)
-  • Results in consistent, smooth rendering across Android, iOS, Web, Desktop
-  • Pixel-perfect design: The same widget tree produces identical output everywhere
-
-WIDGET-BASED ARCHITECTURE:
-  • Everything in Flutter is a widget: buttons, text, layouts, even the app itself
-  • Widgets are immutable snapshots of UI at a point in time
-  • Flutter rebuilds the widget tree when state changes
-  • Skia then renders the new tree to pixels efficiently
-  • This is why Flutter can handle complex UIs with 60+ FPS (or 120 FPS on newer devices)
-
-CROSS-PLATFORM CONSISTENCY:
-  • One Dart codebase → Compiled to native ARM code for iOS & Android
-  • Web and desktop supported with the same Dart code
-  • Same visual output, same performance characteristics
-  • No platform-specific UI code needed (Material Design widgets work everywhere)
-
-═══════════════════════════════════════════════════════════════════
-2. DART'S REACTIVE RENDERING MODEL
-═══════════════════════════════════════════════════════════════════
-
-Dart uses a **declarative** programming model for UI:
-
-DECLARATIVE vs IMPERATIVE:
-  • Imperative: "First do this, then do that" (jQuery, traditional Android)
-    Example: button.setText("Updated")
-  
-  • Declarative: "Here's what the UI should look like" (Flutter, React, Vue)
-    Example: Widget build() { return Text("Updated"); }
-
-REACTIVE RENDERING CYCLE:
-  1. User taps button
-  2. Event handler calls setState()
-  3. setState() marks the widget as dirty
-  4. Framework schedules a rebuild (next frame)
-  5. build() method runs again
-  6. New widget tree is created
-  7. Flutter compares old and new tree (reconciliation)
-  8. Only changed subtrees are rebuilt
-  9. Skia renders the final tree to pixels
-
-EFFICIENCY:
-  • Widget tree comparison is fast (O(n) time)
-  • Const constructors prevent unnecessary widget recreation
-  • Only parts of the tree that changed are rebuilt
-  • Skia's rendering is optimized for dirty regions (only redraw changed areas)
-
-═══════════════════════════════════════════════════════════════════
-3. STATELESSWIDGET vs STATEFULWIDGET
-═══════════════════════════════════════════════════════════════════
-
-STATELESSWIDGET:
-  • Immutable: properties never change during its lifetime
-  • build() method receives all UI information via constructor parameters
-  • No setState() method
-  • Lightweight and efficient
-  • Examples in GreenGuide:
-    - SplashScreen: Shows fixed logo, auto-navigates after 2 seconds
-    - RemindersScreen: Displays static reminder list
-    - StoreScreen: Shows fixed product grid
-    - PlantTile, PlantInfoCard, WaterCounterWidget: Receive data as const params
-
-USE WHEN:
-  • UI is determined entirely by constructor parameters
-  • No input fields or user interactions that change internal state
-  • Configuration is passed from parent
-
-STATEFULWIDGET:
-  • Mutable: internal state can change via setState()
-  • Consists of two classes: the widget and its State
-  • State persists across rebuilds (unlike the widget itself)
-  • build() method runs whenever setState() is called
-  • Examples in GreenGuide:
-    - LoginScreen: Tracks email, password input, and loading state
-    - AddPlantScreen: Tracks selected plant dropdown value
-    - PlantDetailScreen: Tracks wateredCount that changes when button is tapped
-
-USE WHEN:
-  • Widget needs to respond to user input (forms, buttons)
-  • State changes during the widget's lifetime
-  • Widget needs to initialize resources (initState) or clean them up (dispose)
-
-WHY TWO CLASSES?
-  • StatefulWidget is immutable (const) - describes the widget configuration
-  • State is mutable - holds the actual data
-  • State persists across rebuilds, allowing animations and value persistence
-
-═══════════════════════════════════════════════════════════════════
-4. HOW setState() TRIGGERS PARTIAL REBUILDS
-═══════════════════════════════════════════════════════════════════
-
-WHAT HAPPENS WHEN YOU CALL setState():
-
-  In PlantDetailScreen, when user taps "Mark as Watered":
-
-    void _markAsWatered() {
-      setState(() {
-        widget.userPlant.wateredCount++;  // Modify state
-      });
-    }
-
-EXECUTION SEQUENCE:
-  1. setState(() { ... }) is called
-  2. The callback executes, modifying wateredCount
-  3. setState() marks this State as needing rebuild
-  4. At the end of the current frame, build() is called again
-  5. build() returns a NEW widget tree with updated wateredCount
-  6. Flutter compares:
-       • OLD tree: WaterCounterWidget(wateredCount: 0, ...)
-       • NEW tree: WaterCounterWidget(wateredCount: 1, ...)
-     
-  7. Flutter detects the value changed
-  8. Skia re-renders ONLY the WaterCounterWidget (and its children)
-
-WHY PARTIAL REBUILDS?
-  • PlantInfoCard, PlantTile, and other const widgets remain unchanged
-  • Their build() methods are NOT called
-  • Their widgets are reused from the previous tree
-  • This is because they're declared const (immutable)
-
-IMPACT:
-  • Tapping "Mark as Watered" rebuilds only the counter widget
-  • The entire PlantDetailScreen is NOT rebuilt
-  • Performance stays smooth even with large widget trees
-
-═══════════════════════════════════════════════════════════════════
-5. WHY POOR STATE MANAGEMENT CAUSES LAG: LAGGY TO-DO APP CASE
-═══════════════════════════════════════════════════════════════════
-
-ANTI-PATTERN: Managing state at the wrong level
-
-LAGGY TODO APP EXAMPLE:
-  ```
-  class TodoList extends StatefulWidget {
-    @override
-    State<TodoList> createState() => _TodoListState();
-  }
-  
-  class _TodoListState extends State<TodoList> {
-    List<Todo> todos = [];
-    
-    void addTodo(String title) {
-      setState(() {
-        todos.add(Todo(title)); // ← setState() on entire screen
-      });
-    }
-    
-    @override
-    Widget build(BuildContext context) {
-      return ListView.builder(
-        itemCount: todos.length,
-        itemBuilder: (context, index) {
-          return TodoItem(todos[index]); // ← All 100 items rebuild
-        },
-      );
-    }
-  }
-  ```
-
-WHY IT LAGS:
-  1. setState() is called on TodoListState
-  2. build() rebuilds EVERYTHING: ListView, all TodoItem widgets, text fields
-  3. If there are 100 todos, 100 widgets are rebuilt
-  4. Adding just one todo rebuilds 100+ widgets
-  5. With 1000 items: lag is noticeable, even on modern phones
-  6. Skia can render fast, but rebuilding 1000 widget objects is slow
-
-ROOT CAUSE: State is at the wrong level (global screen state, not item state)
-
-═══════════════════════════════════════════════════════════════════
-6. HOW GREENGUIDE AVOIDS UNNECESSARY REBUILDS
-═══════════════════════════════════════════════════════════════════
-
-PATTERN 1: const Constructors
-  • PlantTile is declared: class PlantTile extends StatelessWidget
-  • Constructor is const: const PlantTile({ super.key, ... })
-  • When parent rebuilds, Flutter reuses PlantTile objects from cache
-  • No unnecessary reconstruction
-
-PATTERN 2: Separate Stateful Widgets for State
-  • WaterCounterWidget is a separate widget
-  • Only it rebuilds when wateredCount changes
-  • PlantDetailScreen's build() returns new tree, but other children are reused
-  
-PATTERN 3: Const Widgets in Lists
-  • PlantInfoCard is const → reused across rebuilds
-  • Care information cards (_buildCareCard) are const → no rebuilds
-  • Even with 100 plants, only the counter widget updates
-
-PERFORMANCE RESULT:
-  • Adding a plant: HomeScreen rebuilds, shows new item in ListView
-  • Marking watered: Only WaterCounterWidget rebuilds
-  • Navigating: No unnecessary rebuilds of other screens
-  • Smooth 60 FPS, no jank
-
-CODE EXAMPLE FROM GREENGUIDE:
-  ```
-  class PlantDetailScreen extends StatefulWidget {
-    void _markAsWatered() {
-      setState(() {
-        widget.userPlant.wateredCount++; // Only WaterCounterWidget rebuilds
-      });
-    }
-    
-    @override
-    Widget build(BuildContext context) {
-      return Column(
-        children: [
-          PlantInfoCard(plant: plant), // ← const, reused
-          WaterCounterWidget(
-            wateredCount: widget.userPlant.wateredCount, // ← rebuilds
-            onWatered: _markAsWatered,
-          ),
-          _buildCareCard(...), // ← const, reused
-        ],
-      );
-    }
-  }
-  ```
-
-═══════════════════════════════════════════════════════════════════
-7. ASYNC/AWAIT WITH FIREBASE (FUTURE IMPLEMENTATION)
-═══════════════════════════════════════════════════════════════════
-
-Currently, GreenGuide simulates login with a 1-second delay:
-
-  Future.delayed(const Duration(seconds: 1), () {
-    // Fake network call
-    Navigator.push(...);
-  });
-
-WITH REAL FIREBASE:
-
-  Future<UserCredential> loginWithFirebase(String email, String pwd) async {
-    try {
-      final userCred = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      return userCred;
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-IN STATEFULWIDGET:
-
-  void _handleLogin() async {
-    setState(() { isLoading = true; });
-    
-    try {
-      final user = await loginWithFirebase(email, password);
-      AppState().loggedInUser = user.user?.email;
-      
-      if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
         );
-      }
-    } catch (e) {
-      setState(() { isLoading = false; });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
-      );
-    }
+      },
+    );
   }
 
-KEY CONCEPTS:
-  • async/await makes asynchronous code look synchronous
-  • await pauses execution until Future completes
-  • try/catch handles errors from async operations
-  • setState() updates UI after async operation completes
-  • mounted check prevents updating unmounted widgets (memory leak prevention)
-
-═══════════════════════════════════════════════════════════════════
-8. THE UI OPTIMIZATION TRIANGLE
-═══════════════════════════════════════════════════════════════════
-
-Three key factors determine Flutter app performance:
-
-    ┌─────────────────────┐
-    │  Render Speed       │
-    │  (Skia GPU drawing) │
-    └──────────┬──────────┘
-               │
-        ┌──────┴──────┐
-        │             │
-        ▼             ▼
-    ┌────────┐   ┌────────────┐
-    │ State  │───│ Cross-Platform
-    │Control │   │ Consistency
-    └────────┘   └────────────┘
-
-RENDER SPEED:
-  • How fast Skia can draw pixels to the screen
-  • Measured in FPS (frames per second)
-  • Affected by: number of widgets, complexity of widgets, GPU load
-  • GreenGuide: Uses const constructors → minimal widget overhead
-  • Result: 60+ FPS on all devices
-
-STATE CONTROL:
-  • How efficiently setState() triggers only necessary rebuilds
-  • Measured in: widget rebuilds per user interaction
-  • Affected by: widget hierarchy depth, use of const
-  • GreenGuide: WaterCounterWidget isolated → 1 rebuild per tap
-  • Result: No jank or frame drops
-
-CROSS-PLATFORM CONSISTENCY:
-  • Same visual and behavioral output on iOS, Android, Web, Desktop
-  • No platform-specific code needed
-  • Affected by: use of Material Design widgets, avoiding platform-specific APIs
-  • GreenGuide: All Material 3 widgets → works identically everywhere
-  • Result: Write once, run everywhere
-
-BALANCE:
-  • High Render Speed + High State Control = Smooth, responsive app
-  • High Cross-Platform Consistency = Same experience on all platforms
-  • GreenGuide achieves all three:
-    - const widgets keep state control tight
-    - Skia renders pixels fast
-    - Material 3 ensures consistency
-    - Single Dart codebase works on all platforms
-
-═══════════════════════════════════════════════════════════════════
-9. SUMMARY: WHY GREENGUIDE IS WELL-ARCHITECTED
-═══════════════════════════════════════════════════════════════════
-
-✓ Proper use of StatelessWidget vs StatefulWidget
-  - Screens with no state (Splash, Reminders, Store) are Stateless
-  - Screens with state (Login, AddPlant, PlantDetail) are Stateful
-  
-✓ Const constructors throughout
-  - PlantTile, PlantInfoCard, WaterCounterWidget all const
-  - Flutter reuses these objects, avoiding rebuilds
-
-✓ Isolated state management
-  - WaterCounterWidget only rebuilds when watering count changes
-  - Other widgets reuse from previous tree
-
-✓ Proper navigation
-  - Navigator.push for routing between screens
-  - Each screen manages its own state independently
-
-✓ Clear data model
-  - Plant class for care information
-  - Product class for store items
-  - UserPlant class for tracking watering count
-
-✓ In-memory data (Firebase simulation)
-  - AppState singleton holds user's plants and reminders
-  - Simulates database operations
-  - Easy to swap with Firebase later
-
-✓ Material 3 theming
-  - Consistent color scheme across all screens
-  - Accessible typography and sizing
-  - Professional appearance
-
-═══════════════════════════════════════════════════════════════════
-10. LEARNING OUTCOMES FROM THIS PROJECT
-═══════════════════════════════════════════════════════════════════
-
-By studying this GreenGuide implementation, you understand:
-
-1. When to use StatelessWidget vs StatefulWidget
-2. How setState() triggers partial rebuilds via const constructors
-3. Why poor state management causes lag (ToDoApp example)
-4. How Flutter's widget architecture and Skia enable smooth, cross-platform UIs
-5. Proper separation of concerns (state at the right level)
-6. How Dart's async/await prepares for Firebase integration
-7. Material 3 design patterns and theming
-8. Navigation patterns in Flutter
-9. Common widget patterns: lists, forms, cards, grids
-10. Performance optimization through const constructors and isolated state
-
-═══════════════════════════════════════════════════════════════════
-
-This architecture can scale to 10,000+ users, millions of plants, and
-complex business logic without performance degradation, as long as you:
-  • Keep const where possible
-  • Isolate state to the smallest widget
-  • Use proper data structures (avoid rebuilding entire lists)
-  • Leverage Skia's rendering optimizations
-  • Use proper navigation patterns
-
-Good luck with your university assignment!
-*/
+  Widget _buildCareSection(String title, String content) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          content,
+          style: TextStyle(color: Colors.grey.shade700),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+}
