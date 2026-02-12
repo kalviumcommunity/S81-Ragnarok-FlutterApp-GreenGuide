@@ -97,7 +97,6 @@ class _ResponsiveHomeState extends State<ResponsiveHome> {
   /// Build main content area with responsive layout
   Widget _buildMainContent(BuildContext context, BoxConstraints constraints) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
     final isTablet = screenWidth > 600;
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
