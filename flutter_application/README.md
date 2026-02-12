@@ -60,6 +60,75 @@ Select an emulator or physical device. The app should launch showing the GreenGu
 
 ---
 
+## Setup Verification
+
+This section documents the Flutter environment setup and first app run for Sprint #2.
+
+### Flutter Doctor Output
+
+The following screenshot shows the output of `flutter doctor -v` command, verifying that the Flutter SDK is properly installed and configured:
+
+![Flutter Doctor Output](screenshots/flutter_doctor.png)
+
+**Command output summary:**
+```
+[√] Flutter (Channel stable, 3.38.9, on Microsoft Windows)
+    • Flutter version 3.38.9 on channel stable
+    • Framework revision 67323de285
+    • Dart version 3.10.8
+    • DevTools version 2.51.1
+
+[√] Windows Version (11 Home Single Language 64-bit, 25H2)
+
+[√] Chrome - develop for the web
+    • Chrome at C:\Program Files\Google\Chrome\Application\chrome.exe
+
+[√] Connected device (3 available)
+    • Windows (desktop)
+    • Chrome (web)
+    • Edge (web)
+
+[√] Network resources - All expected network resources are available
+```
+
+### Running App on Device/Emulator
+
+The following screenshot shows the GreenGuide Flutter app running successfully:
+
+![App Running on Device](screenshots/app_running.png)
+
+**Steps to run:**
+```bash
+cd flutter_application
+flutter pub get
+flutter run -d chrome
+```
+
+### Installation Steps Followed
+
+1. **Downloaded Flutter SDK** from [flutter.dev](https://docs.flutter.dev/get-started/install/windows)
+2. **Extracted to** `C:\Users\Mohammed Shammas\Flutter SDK\flutter`
+3. **Added to PATH** via Environment Variables → System PATH → `flutter\bin`
+4. **Verified installation** with `flutter doctor`
+5. **Installed VS Code extensions:** Flutter and Dart from Marketplace
+6. **Created project** with `flutter create flutter_application`
+7. **Ran app** with `flutter run -d chrome`
+
+### Reflection
+
+**Challenges faced during installation:**
+- Initial PATH configuration required restarting the terminal for changes to take effect
+- Ensuring all necessary components were detected by `flutter doctor`
+- Configuring the correct device target (Chrome for web development)
+
+**How this setup prepares for building real mobile apps:**
+- The Flutter SDK provides a complete toolkit for cross-platform development (iOS, Android, Web, Desktop)
+- Hot reload enables rapid UI iteration without full app restarts
+- `flutter doctor` ensures a healthy environment for consistent builds
+- VS Code integration with Flutter/Dart extensions provides excellent developer experience with auto-complete, debugging, and widget previews
+
+---
+
 ## Welcome Screen UI (Sprint #2)
 
 The default counter app has been replaced with a custom stateful Welcome screen:
