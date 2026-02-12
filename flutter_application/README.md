@@ -1,30 +1,82 @@
 ## GreenGuide – Sustainable Habits Companion
 
-GreenGuide is a cross-platform Flutter app concept that helps users build simple, sustainable daily habits (like saving water, reducing waste, and tracking eco-friendly actions). This sprint focuses on setting up the Flutter environment and building the first "Welcome" screen.
+GreenGuide is a cross-platform Flutter app concept that helps users build simple, sustainable daily habits (like saving water, reducing waste, and tracking eco-friendly actions). This sprint focuses on setting up the Flutter environment, understanding project structure, and building core app features.
 
 ---
 
-## Folder Structure (lib/)
+## Project Structure Overview
 
-This project follows a modular structure under the `lib` directory:
+📚 **For detailed documentation, see [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)**
 
-- `lib/main.dart` – App entry point. Sets up `MaterialApp`, global theme, and routes to the first screen.
-- `lib/screens/` – Screen-level widgets (full pages). Currently contains `welcome_screen.dart` for the main Welcome UI.
-- `lib/widgets/` – Reusable, smaller UI components (buttons, cards, form fields). This will be used more in future sprints.
-- `lib/models/` – (Planned) Data models for domain objects like `Habit`, `Category`, etc.
-- `lib/services/` – (Planned) API, Firebase, and local storage logic.
+This Flutter project follows a standardized, scalable folder structure:
 
-### How this supports modular design
+### Visual Hierarchy
 
-- Separates concerns: UI screens, reusable widgets, data models, and services live in different folders.
-- Easier scaling: New features can be added by creating new screens, models, and services without touching unrelated code.
-- Improved readability: Team members quickly know where to look for a particular type of file.
+```
+flutter_application/
+├── lib/                   # 📦 Main application code
+│   ├── main.dart          # App entry point
+│   ├── firebase_options.dart
+│   ├── screens/           # UI screens/pages
+│   │   ├── welcome_screen.dart
+│   │   ├── login_screen.dart
+│   │   ├── signup_screen.dart
+│   │   ├── dashboard_screen.dart
+│   │   └── responsive_home.dart
+│   └── services/          # Business logic & APIs
+│       ├── auth_service.dart
+│       └── firestore_service.dart
+├── android/               # Android platform config
+├── ios/                   # iOS platform config
+├── web/                   # Web platform files
+├── windows/               # Windows desktop files
+├── test/                  # Automated tests
+├── pubspec.yaml           # Dependencies & config
+└── README.md              # This file
+```
 
-### Naming conventions
+### Key Folders Explained
 
-- Files: `snake_case.dart` (e.g., `welcome_screen.dart`, `habit_model.dart`).
-- Classes & Widgets: `PascalCase` (e.g., `WelcomeScreen`, `HabitModel`).
-- Variables & functions: `camelCase` (e.g., `selectedHabit`, `toggleMessage()`).
+| Folder | Purpose |
+|--------|---------|
+| `lib/` | All Dart source code for the app |
+| `lib/screens/` | Full-page UI components (screens) |
+| `lib/services/` | Business logic, API calls, Firebase services |
+| `lib/widgets/` | Reusable UI components (planned) |
+| `lib/models/` | Data classes and models (planned) |
+| `android/` | Android-specific build configuration |
+| `ios/` | iOS-specific build configuration |
+| `test/` | Unit, widget, and integration tests |
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `main.dart` | App entry point, routing, theme setup |
+| `pubspec.yaml` | Dependencies, assets, project metadata |
+| `analysis_options.yaml` | Dart linting and style rules |
+| `.gitignore` | Files excluded from version control |
+
+### Naming Conventions
+
+- **Files:** `snake_case.dart` (e.g., `welcome_screen.dart`)
+- **Classes:** `PascalCase` (e.g., `WelcomeScreen`)
+- **Variables/Functions:** `camelCase` (e.g., `toggleMessage()`)
+
+### Why Understanding Structure Matters
+
+1. **Faster Development:** Know exactly where to add new features
+2. **Team Collaboration:** Everyone follows the same organization
+3. **Easier Debugging:** Logical grouping helps isolate issues
+4. **Scalability:** Clean structure grows without becoming chaotic
+5. **Cross-Platform:** Understand how Flutter builds for multiple targets
+
+### How Structure Helps Team Collaboration
+
+- **Parallel Work:** Team members can work on different folders simultaneously
+- **Code Reviews:** Clear organization makes PRs easier to understand
+- **Onboarding:** New developers can navigate the project quickly
+- **Consistency:** Standard conventions across all Flutter projects
 
 ---
 
