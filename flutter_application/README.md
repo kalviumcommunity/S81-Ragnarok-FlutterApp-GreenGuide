@@ -364,7 +364,325 @@ This approach is **scalable, maintainable, and user-centric** – the hallmark o
 
 ---
 
-## Useful Flutter & Dart Resources
+## Firebase Integration (Sprint #2 – Authentication & Firestore)
+
+### Overview
+
+GreenGuide now features **Firebase Authentication** and **Cloud Firestore** integration for secure user login and real-time data storage. This enables:
+
+- ✅ **User Registration & Login** – Secure email/password authentication
+- ✅ **User Profiles** – Store user data in Firestore
+- ✅ **Eco Tips Storage** – Add, edit, delete, and track sustainability tips
+- ✅ **Real-time Updates** – StreamBuilder for live data synchronization
+- ✅ **User Statistics** – Track completion rates and progress
+
+### Firebase Setup
+
+#### 1. Create Firebase Project
+
+1. Go to [Firebase Console](https://console.firebase.google.com)
+2. Click **"Create Project"** and name it (e.g., "GreenGuide")
+3. Enable Google Analytics (optional)
+4. Click **"Create"**
+
+#### 2. Add Flutter App to Firebase
+
+1. In Firebase Console, click **"Add App"** → select **"Flutter"**
+2. Register each platform you're targeting (Android, iOS, Web, Windows)
+3. Download the required configuration files:
+   - **Android:** `google-services.json` → place in `android/app/`
+   - **iOS:** `GoogleService-Info.plist` → place in `ios/Runner/`
+   - **Web:** Auto-configured by FlutterFire CLI
+   - **Windows:** Auto-configured by FlutterFire CLI
+
+#### 3. Install FlutterFire CLI and Configure
+
+Run this command from your project root:
+
+```bash
+dart pub global activate flutterfire_cli
+flutterfire configure
+```
+
+This command will:
+- Detect your platforms (Android, iOS, Web, etc.)
+- Create/update `firebase_options.dart` with your credentials
+- Enable necessary APIs in Firebase Console
+
+**After running this command, your `firebase_options.dart` will be auto-generated with your actual Firebase credentials.**
+
+#### 4. Install Firebase Dependencies
+
+Your `pubspec.yaml` should already include:
+
+```yaml
+dependencies:
+  firebase_core: ^3.0.0
+  firebase_auth: ^5.0.0
+  cloud_firestore: ^5.0.0
+```
+
+Run:
+
+```bash
+flutter pub get
+```
+
+### Code Implementation
+
+#### AuthService (lib/services/auth_service.dart)
+
+Handles all Firebase Authentication operations:
+
+```dart
+class AuthService {
+  /// Sign up with email and password
+  Future<UserCredential?> signUp({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final credential = await _firebaseAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return credential;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Login with email and password
+  Future<UserCredential?> login({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      return await _firebaseAuth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Sign out
+  Future<void> logout() async {
+    await _firebaseAuth.signOut();
+  }
+}
+```
+
+#### FirestoreService (lib/services/firestore_service.dart)
+
+Implements CRUD operations for storing user data and eco tips:
+
+```dart
+class FirestoreService {
+  /// Save user profile to Firestore
+  Future<void> saveUserProfile({
+    required String uid,
+    required String email,
+    required String displayName,
+  }) async {
+    await _firestore.collection('users').doc(uid).set({
+      'uid': uid,
+      'email': email,
+      'displayName': displayName,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Add eco tip for user
+  Future<String> addEcoTip({
+    required String uid,
+    required String title,
+    required String description,
+    required String category,
+  }) async {
+    final docRef = await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('ecoTips')
+        .add({
+      'title': title,
+      'description': description,
+      'category': category,
+      'completed': false,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    return docRef.id;
+  }
+
+  /// Stream eco tips (real-time updates)
+  Stream<QuerySnapshot> streamUserEcoTips(String uid) {
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('ecoTips')
+        .orderBy('createdAt', descending: true)
+        .snapshots();
+  }
+
+  /// Toggle completion status
+  Future<void> toggleEcoTipCompletion({
+    required String uid,
+    required String tipId,
+    required bool completed,
+  }) async {
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('ecoTips')
+        .doc(tipId)
+        .update({'completed': completed});
+  }
+
+  /// Delete eco tip
+  Future<void> deleteEcoTip({
+    required String uid,
+    required String tipId,
+  }) async {
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('ecoTips')
+        .doc(tipId)
+        .delete();
+  }
+}
+```
+
+#### SignupScreen & LoginScreen
+
+User-friendly forms with validation and error handling for account creation and authentication.
+
+#### DashboardScreen
+
+Displays:
+- **User Statistics:** Total tips, completed, pending, completion rate
+- **Eco Tips List:** StreamBuilder for real-time tip updates
+- **Add/Edit/Delete:** Full CRUD operations on eco tips
+- **Logout:** Sign out functionality
+
+### Firestore Database Structure
+
+```
+users/
+  {uid}/
+    - uid: string
+    - email: string
+    - displayName: string
+    - createdAt: timestamp
+    - updatedAt: timestamp
+    ecoTips/
+      {tipId}/
+        - title: string
+        - description: string
+        - category: string (enum: Water Conservation, Energy Savings, etc.)
+        - completed: boolean
+        - createdAt: timestamp
+        - updatedAt: timestamp
+```
+
+### Testing Firebase Features
+
+#### Test Signup
+
+1. Tap **"Sign Up"** on login screen
+2. Enter email, name, and password
+3. Verify user created in Firebase Console → **Authentication** tab
+4. User profile should appear in Firestore under `users/{uid}`
+
+#### Test Login
+
+1. Use registered credentials to log in
+2. Should navigate to **DashboardScreen**
+3. See user name in AppBar
+
+#### Test Firestore CRUD
+
+1. On dashboard, tap **"Add Tip"** button
+2. Enter title, select category, add description
+3. Tap **"Add Tip"** → observe real-time update in tips list
+4. Check Firebase Console → **Firestore Database** → navigate to `users/{uid}/ecoTips/{tipId}`
+5. Toggle completion checkbox → data updates instantly
+6. Delete by tapping trash icon → document removed from Firestore
+
+#### Verify Firebase Console
+
+After testing, check:
+- **Authentication:**  User email registered
+- **Firestore:** Data structure matches schema above
+- **Real-time Updates:** Changes in app reflect instantly in Console
+
+### Authentication Error Handling
+
+The app gracefully handles:
+- Weak passwords (< 6 characters)
+- Email already in use
+- Invalid credentials during login
+- Missing fields
+
+All errors display user-friendly messages in a red banner.
+
+### Challenges & Solutions
+
+#### Challenge 1: Async Initialization
+
+**Problem:** Firebase initialization happens asynchronously; UI renders before config loads.
+
+**Solution:** Used `WidgetsFlutterBinding.ensureInitialized()` and `await Firebase.initializeApp()` in `main()` to ensure Firebase is ready before `runApp()`.
+
+#### Challenge 2: Real-time Data Sync
+
+**Problem:** Users expect instant updates when data changes.
+
+**Solution:** Used `StreamBuilder` with `FirebaseFirestore.instance.collection(...).snapshots()` to listen to changes and rebuild UI automatically.
+
+#### Challenge 3: User-Specific Data
+
+**Problem:** One user's tips shouldn't be visible to another.
+
+**Solution:** Used user's UID as document ID and collection path: `users/{uid}/ecoTips/{tipId}`.
+
+#### Challenge 4: Error Handling
+
+**Problem:** Firebase throws specific errors that need user-friendly messages.
+
+**Solution:** Caught `FirebaseAuthException` with specific error codes (`weak-password`, `user-not-found`, etc.) and displayed meaningful messages.
+
+### Security Rules for Firestore
+
+Add these rules in **Firebase Console** → **Firestore Database** → **Rules tab:**
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can only access their own documents
+    match /users/{uid} {
+      allow read, write: if request.auth.uid == uid;
+      
+      match /ecoTips/{document=**} {
+        allow read, write: if request.auth.uid == uid;
+      }
+    }
+  }
+}
+```
+
+### Next Steps
+
+1. ✅ Implement notification when tips are completed
+2. ✅ Add tips sharing functionality
+3. ✅ Implement leaderboard (top eco contributors)
+4. ✅ Analytics tracking (how many users, total tips added, etc.)
+
+---
+
+
 
 - Official Flutter docs: https://docs.flutter.dev/
 - Flutter widgets catalog: https://docs.flutter.dev/ui/widgets
