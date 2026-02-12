@@ -61,6 +61,20 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   child: Text(_isWelcome ? 'I\'m Ready' : 'Reset Welcome'),
                 ),
               ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/responsive');
+                  },
+                  icon: const Icon(Icons.arrow_forward),
+                  label: const Text('Explore Responsive Layout'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green[700],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
