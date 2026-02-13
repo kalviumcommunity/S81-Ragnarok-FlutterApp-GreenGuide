@@ -22,7 +22,8 @@ flutter_application/
 │   │   ├── login_screen.dart
 │   │   ├── signup_screen.dart
 │   │   ├── dashboard_screen.dart
-│   │   └── responsive_home.dart
+│   │   ├── responsive_home.dart
+│   │   └── widget_tree_demo.dart          # Widget Tree & Reactive UI demo
 │   └── services/          # Business logic & APIs
 │       ├── auth_service.dart
 │       └── firestore_service.dart
@@ -109,6 +110,193 @@ flutter run
 ```
 
 Select an emulator or physical device. The app should launch showing the GreenGuide Welcome screen with an icon and a button that toggles the welcome message.
+
+---
+
+---
+
+## Sprint #2: Understanding the Widget Tree & Reactive UI Model
+
+### 3.13 - Widget Tree & Reactive UI Concepts
+
+This section demonstrates Flutter's core architectural concepts: the **widget tree** and the **reactive UI model**.
+
+#### What is a Widget Tree?
+
+In Flutter, everything is a widget. A **widget tree** is a hierarchical representation of all UI elements in your app, similar to a family tree where each parent widget can have multiple child widgets.
+
+**Key Points:**
+- Every visible element (Text, Button, Container, etc.) is a widget
+- Widgets are arranged in a tree structure starting from a root widget (MaterialApp)
+- Each widget is immutable and describes a part of the UI
+- The tree structure mirrors how elements are nested in the code
+
+**Example Widget Tree Structure:**
+
+```
+MaterialApp
+ ├─ Scaffold
+ │   ├─ AppBar
+ │   │   ├─ Text ("title")
+ │   │   └─ Icon
+ │   └─ Body (Center)
+ │       └─ Column
+ │           ├─ Container
+ │           │   └─ Icon
+ │           ├─ Text ("Count: 5")
+ │           ├─ Row
+ │           │   ├─ ElevatedButton ("Decrease")
+ │           │   └─ ElevatedButton ("Increase")
+ │           └─ Card
+ │               ├─ Text ("About Widget Trees")
+ │               └─ Text (description)
+```
+
+#### How the Widget Tree Works
+
+1. **Build Process:** Flutter traverses the widget tree and calls the `build()` method on each widget
+2. **Rendering:** Each widget returns its visual representation
+3. **Composition:** Widgets combine to create the complete UI
+4. **Reusability:** Widgets can be reused throughout the app
+
+#### Understanding Flutter's Reactive UI Model
+
+Flutter follows a **reactive programming model**, meaning the UI automatically updates when the app's state changes. Instead of manually updating views, you simply change the state, and Flutter handles the re-rendering.
+
+**Key Concepts:**
+
+##### Stateless vs Stateful Widgets
+
+- **StatelessWidget:** Immutable, no internal state. Used for static UI elements.
+- **StatefulWidget:** Can maintain state. Used when UI needs to change based on user interaction or data changes.
+
+##### How setState() Works
+
+When you call `setState()`, Flutter:
+1. Marks the widget as needing a rebuild
+2. Calls the `build()` method again
+3. Re-renders only the affected widgets (efficient!)
+4. Updates the UI on screen
+
+**Example Pattern:**
+
+```dart
+class CounterApp extends StatefulWidget {
+  @override
+  State<CounterApp> createState() => _CounterAppState();
+}
+
+class _CounterAppState extends State<CounterApp> {
+  int count = 0;
+
+  void increment() {
+    setState(() {
+      count++;  // Update state
+    });
+    // Flutter automatically rebuilds the widget!
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          children: [
+            Text('Count: $count'),
+            ElevatedButton(
+              onPressed: increment,
+              child: Text('Increment'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+
+#### Why Flutter's Reactive Model is Efficient
+
+Unlike traditional imperative frameworks where you manually update UI elements, Flutter:
+
+- ✅ **Only rebuilds affected widgets** - Not the entire screen
+- ✅ **Compares widget trees** - Uses diffing to find changes
+- ✅ **Manages rendering efficiently** - Leverages GPU acceleration
+- ✅ **Maintains performance** - Even complex UIs remain smooth
+
+**Visual Comparison:**
+
+| Imperative (Traditional) | Reactive (Flutter) |
+|---|---|
+| Manually update: `textView.setText("Count: 5")` | Change state: `count = 5` → UI updates automatically |
+| Easy to introduce bugs | Predictable and safer |
+| Need to track all state manually | Framework handles state changes |
+
+#### GreenGuide Widget Tree Demo
+
+We created a dedicated demo screen (`widget_tree_demo.dart`) inside `lib/screens/` that demonstrates these concepts interactively.
+
+**To view the demo:**
+
+```bash
+# Run the app and navigate to /widget-tree-demo
+# Or modify main.dart to use WidgetTreeDemoScreen as the home screen
+```
+
+**Demo Features:**
+
+1. **Counter Example** - Shows state changes with increment/decrement buttons
+2. **Expandable Card** - Demonstrates conditional rendering (expand/collapse)
+3. **Theme Toggle** - Changes colors to show reactive updates across the tree
+4. **Reset Button** - Resets all state to initial values
+5. **Clear Widget Hierarchy** - Code uses helper methods to show organizational structure
+
+#### Widget Tree Structure for GreenGuide Demo
+
+```
+Scaffold (WidgetTreeDemoScreen)
+ ├─ AppBar
+ │   └─ Text ("Widget Tree & Reactive UI Demo")
+ ├─ Body
+ │   └─ Container
+ │       └─ SingleChildScrollView
+ │           └─ Column
+ │               ├─ _buildHeaderSection()
+ │               │   └─ Column
+ │               │       ├─ Text ("Widget Tree Hierarchy")
+ │               │       └─ Text (description)
+ │               ├─ _buildCounterCard()
+ │               │   └─ Card
+ │               │       └─ Padding
+ │               │           └─ Column
+ │               │               ├─ Text ("Counter Example")
+ │               │               ├─ Container (count display)
+ │               │               │   └─ Text ("Count: $_counterValue")
+ │               │               └─ Row
+ │               │                   ├─ ElevatedButton ("Decrease")
+ │               │                   └─ ElevatedButton ("Increase")
+ │               ├─ _buildInfoCard()
+ │               │   └─ Card
+ │               │       └─ Column
+ │               │           ├─ GestureDetector
+ │               │           │   └─ Row
+ │               │           │       ├─ Text ("About Widget Trees")
+ │               │           │       └─ Icon (expand/collapse)
+ │               │           └─ [Conditional] Container + Text (info)
+ │               └─ _buildActionButtons()
+ │                   └─ Column
+ │                       ├─ Row
+ │                       │   └─ ElevatedButton ("Toggle Theme")
+ │                       └─ OutlinedButton ("Reset All")
+```
+
+#### Key Takeaways
+
+1. **Everything is a Widget** - Text, buttons, layouts—all widgets in a tree
+2. **Reactive Updates** - Change state → UI updates automatically
+3. **Efficient Rendering** - Flutter rebuilds only what changed
+4. **Hierarchical Structure** - Widgets nest and compose to build complex UIs
+5. **Predictable Behavior** - Same state = same UI output (deterministic)
 
 ---
 

@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/responsive_home.dart';
 import 'screens/login_screen.dart';
+import 'screens/widget_tree_demo.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,6 +32,7 @@ class MyApp extends StatelessWidget {
         '/responsive': (context) => const ResponsiveHome(),
         '/welcome': (context) => const WelcomeScreen(),
         '/login': (context) => const LoginScreen(),
+        '/widget-tree-demo': (context) => const WidgetTreeDemoScreen(),
       },
     );
   }
