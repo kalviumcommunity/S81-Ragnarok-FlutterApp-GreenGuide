@@ -23,7 +23,8 @@ flutter_application/
 │   │   ├── signup_screen.dart
 │   │   ├── dashboard_screen.dart
 │   │   ├── responsive_home.dart
-│   │   └── widget_tree_demo.dart          # Widget Tree & Reactive UI demo
+│   │   ├── widget_tree_demo.dart          # Widget Tree & Reactive UI demo
+│   │   └── stateless_stateful_demo.dart   # Stateless vs Stateful Widgets demo
 │   └── services/          # Business logic & APIs
 │       ├── auth_service.dart
 │       └── firestore_service.dart
@@ -297,6 +298,153 @@ Scaffold (WidgetTreeDemoScreen)
 3. **Efficient Rendering** - Flutter rebuilds only what changed
 4. **Hierarchical Structure** - Widgets nest and compose to build complex UIs
 5. **Predictable Behavior** - Same state = same UI output (deterministic)
+
+---
+
+### 3.14 - Creating and Using Stateless and Stateful Widgets
+
+This section demonstrates the two fundamental building blocks of every Flutter app: **Stateless** and **Stateful** widgets.
+
+#### What are Stateless and Stateful Widgets?
+
+##### StatelessWidget
+
+A `StatelessWidget` does **not store any mutable state** — once built, it does not change until rebuilt by its parent.
+
+**When to use:**
+- Static UI components that remain constant
+- Labels, icons, static text, and informational displays
+- Any widget that doesn't need to change based on user interaction
+
+**Example - GreetingWidget:**
+```dart
+class GreetingWidget extends StatelessWidget {
+  final String name;
+
+  const GreetingWidget({super.key, required this.name});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      'Hello, $name! 👋',
+      style: const TextStyle(
+        fontSize: 24,
+        fontWeight: FontWeight.bold,
+        color: Colors.green,
+      ),
+    );
+  }
+}
+```
+
+This widget displays the same greeting unless a parent rebuilds it with a new value.
+
+##### StatefulWidget
+
+A `StatefulWidget` maintains **internal state** that can change during the app's lifecycle. It can update its UI dynamically in response to user actions, animations, or data changes.
+
+**When to use:**
+- Interactive elements that change on user input
+- Counters, toggles, forms, and dynamic displays
+- Any widget where the UI depends on changing data
+
+**Example - CounterWidget:**
+```dart
+class CounterWidget extends StatefulWidget {
+  const CounterWidget({super.key});
+
+  @override
+  State<CounterWidget> createState() => _CounterWidgetState();
+}
+
+class _CounterWidgetState extends State<CounterWidget> {
+  int _count = 0;
+
+  void _increment() {
+    setState(() {
+      _count++;
+    });
+  }
+
+  void _decrement() {
+    setState(() {
+      _count--;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text('Count: $_count'),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(onPressed: _decrement, child: Text('Decrease')),
+            ElevatedButton(onPressed: _increment, child: Text('Increase')),
+          ],
+        ),
+      ],
+    );
+  }
+}
+```
+
+The `setState()` method rebuilds only the parts of the UI that change.
+
+#### GreenGuide Stateless & Stateful Demo
+
+We created a dedicated demo screen (`stateless_stateful_demo.dart`) inside `lib/screens/` that demonstrates both widget types in action.
+
+**To view the demo:**
+```bash
+# Run the app and navigate to /stateless-stateful-demo
+# Or modify main.dart to use StatelessStatefulDemoScreen as the home screen
+```
+
+**Demo Features:**
+
+1. **StatelessWidget Examples:**
+   - `StaticHeaderBanner` - A gradient banner that displays a static title and subtitle
+   - `GreetingWidget` - Displays a personalized greeting message
+   - `StaticInfoCard` - Shows informational cards about widget types
+
+2. **StatefulWidget Examples:**
+   - `CounterWidget` - Interactive counter with increment/decrement/reset buttons
+   - `ThemeToggleWidget` - Switch that toggles between Light and Dark mode UI
+   - `ColorChangerWidget` - Tappable circle that cycles through different colors
+
+#### Screenshots
+
+**Initial UI State:**
+
+![Stateless Stateful Demo - Initial](screenshots/stateless_stateful_initial.png)
+
+**After User Interaction:**
+
+![Stateless Stateful Demo - Updated](screenshots/stateless_stateful_updated.png)
+
+#### Key Differences Between Stateless and Stateful Widgets
+
+| Feature | StatelessWidget | StatefulWidget |
+|---------|-----------------|----------------|
+| State | No internal state | Maintains mutable state |
+| Rebuild | Only when parent rebuilds | When `setState()` is called |
+| Use Case | Static UI elements | Interactive/dynamic UI |
+| Performance | Lighter, more efficient | Slightly heavier due to state management |
+| Examples | Labels, icons, text | Counters, toggles, forms |
+
+#### Reflection
+
+**How do Stateful widgets make Flutter apps dynamic?**
+Stateful widgets allow the UI to respond to user interactions, data changes, and animations by maintaining internal state. When `setState()` is called, Flutter efficiently rebuilds only the affected widgets, creating smooth, responsive user experiences.
+
+**Why is it important to separate static and reactive parts of the UI?**
+- **Performance:** Stateless widgets are lighter and more efficient
+- **Code Organization:** Clear separation makes code easier to understand and maintain
+- **Predictability:** Stateless widgets always produce the same output, making them easier to test
+- **Scalability:** Proper separation leads to cleaner architecture as apps grow
 
 ---
 
