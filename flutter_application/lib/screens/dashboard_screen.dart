@@ -199,7 +199,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Welcome, ${user?.displayName ?? 'User'}'),
+        // Hot Reload Demo: Changed text below
+        title: Text('Welcome to Hot Reload, ${user?.displayName ?? 'User'}!'),
         backgroundColor: Colors.green[700],
         actions: [
           IconButton(
@@ -362,6 +363,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       tipId: tip.id,
                                       completed: value ?? false,
                                     );
+                                    debugPrint('Tip "${data['title']}" marked as: ${value ?? false}');
                                   },
                                   activeColor: Colors.green[700],
                                 ),

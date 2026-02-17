@@ -1141,8 +1141,59 @@ service cloud.firestore {
 
 
 
-- Official Flutter docs: https://docs.flutter.dev/
-- Flutter widgets catalog: https://docs.flutter.dev/ui/widgets
-- Dart language tour: https://dart.dev/guides/language/language-tour
-- Flutter layout basics: https://docs.flutter.dev/ui/layout
-- State management overview: https://docs.flutter.dev/development/data-and-backend/state-mgmt
+
+
+---
+
+## Sprint #2: Hot Reload, Debug Console, and Flutter DevTools Demonstration
+
+This section demonstrates the use of Flutter’s Hot Reload, Debug Console, and DevTools for rapid development, debugging, and performance analysis.
+
+### 1. Hot Reload Demonstration
+
+- **Step:** Changed the AppBar text in `dashboard_screen.dart` from `Welcome, User` to `Welcome to Hot Reload, User!`.
+- **How to Use:**
+  1. Run the app using `flutter run` or from VS Code.
+  2. Save the file and use Hot Reload (press `r` in the terminal or click the Hot Reload button).
+  3. The updated text appears instantly without restarting the app.
+
+**Screenshot:**
+> ![Hot Reload Demo](screenshots/hot_reload_demo.png)
+
+### 2. Debug Console Demonstration
+
+- **Step:** Added a `debugPrint` statement when marking a tip as completed in `dashboard_screen.dart`.
+- **How to Use:**
+  1. Mark any tip as completed in the app.
+  2. Observe the Debug Console for a log like: `Tip "<title>" marked as: true`.
+
+**Screenshot:**
+> ![Debug Console Log](screenshots/debug_console_log.png)
+
+### 3. Flutter DevTools Demonstration
+
+- **How to Use:**
+  1. Run the app in debug mode.
+  2. Open DevTools from VS Code (command palette: "Open DevTools") or run `flutter pub global run devtools` in the terminal.
+  3. Use the Widget Inspector to explore the widget tree, or the Performance tab to analyze rendering.
+
+**Screenshot:**
+> ![DevTools Widget Inspector](screenshots/devtools_widget_inspector.png)
+
+---
+
+### Reflection
+
+**How does Hot Reload improve productivity?**
+
+Hot Reload allows developers to see code changes instantly without restarting the app or losing state. This speeds up UI iteration, experimentation, and bug fixing, making the development process much more efficient.
+
+**Why is DevTools useful for debugging and optimization?**
+
+Flutter DevTools provides powerful tools for inspecting the widget tree, monitoring performance, tracking memory usage, and debugging layout issues. It helps identify bottlenecks and optimize the app for a smoother user experience.
+
+**How can you use these tools in a team development workflow?**
+
+Teams can use Hot Reload for rapid prototyping, Debug Console for collaborative debugging, and DevTools for shared performance analysis. These tools help maintain high code quality, speed up reviews, and ensure everyone can quickly identify and fix issues.
+
+---
