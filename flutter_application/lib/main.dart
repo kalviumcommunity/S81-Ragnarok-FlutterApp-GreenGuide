@@ -5,6 +5,8 @@ import 'screens/responsive_home.dart';
 import 'screens/login_screen.dart';
 import 'screens/widget_tree_demo.dart';
 import 'screens/stateless_stateful_demo.dart';
+import 'screens/home_screen.dart';
+import 'screens/second_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,8 +30,10 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
-      home: const LoginScreen(),
+      initialRoute: '/', // Start with HomeScreen
       routes: {
+        '/': (context) => HomeScreen(),
+        '/second': (context) => SecondScreen(),
         '/responsive': (context) => const ResponsiveHome(),
         '/welcome': (context) => const WelcomeScreen(),
         '/login': (context) => const LoginScreen(),

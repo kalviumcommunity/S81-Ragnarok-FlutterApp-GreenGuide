@@ -1,3 +1,112 @@
+---
+
+## Sprint #2: Multi-Screen Navigation Using Navigator and Routes
+
+This section demonstrates how to implement navigation between multiple screens in Flutter using the Navigator and named routes.
+
+### Navigation Flow Overview
+
+- The app uses named routes for clean, scalable navigation.
+- Two demo screens are provided: HomeScreen and SecondScreen.
+- Navigation is managed using Navigator.pushNamed and Navigator.pop.
+
+### Code Snippets
+
+**main.dart (route setup):**
+
+```dart
+import 'package:flutter/material.dart';
+import 'screens/home_screen.dart';
+import 'screens/second_screen.dart';
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      initialRoute: '/', // Start with HomeScreen
+      routes: {
+        '/': (context) => HomeScreen(),
+        '/second': (context) => SecondScreen(),
+      },
+    );
+  }
+}
+```
+
+**home_screen.dart:**
+
+```dart
+import 'package:flutter/material.dart';
+
+class HomeScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Home Screen')),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/second');
+          },
+          child: Text('Go to Second Screen'),
+        ),
+      ),
+    );
+  }
+}
+```
+
+**second_screen.dart:**
+
+```dart
+import 'package:flutter/material.dart';
+
+class SecondScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Second Screen')),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          child: Text('Back to Home'),
+        ),
+      ),
+    );
+  }
+}
+```
+
+### Screenshots
+
+> ![Home Screen](screenshots/home_screen.png)
+> ![Second Screen](screenshots/second_screen.png)
+> ![Navigation Demo](screenshots/navigation_demo.gif)
+
+---
+
+### Reflection
+
+**How does Navigator manage the app’s stack of screens?**
+
+Navigator uses a stack data structure. Each new screen is pushed onto the stack with push/pushNamed, and removed with pop/popNamed. The top of the stack is always the current screen.
+
+**What are the benefits of using named routes in larger applications?**
+
+Named routes keep navigation logic organized and decoupled from widget code. This makes it easier to manage, refactor, and scale navigation as the app grows.
+
+**How does Flutter manage the navigation stack?**
+
+Flutter’s Navigator maintains a stack of Route objects. When you navigate, a new Route is pushed; when you go back, the top Route is popped, revealing the previous screen. This enables deep navigation flows and back navigation out-of-the-box.
+
+---
 ## GreenGuide – Sustainable Habits Companion
 
 GreenGuide is a cross-platform Flutter app concept that helps users build simple, sustainable daily habits (like saving water, reducing waste, and tracking eco-friendly actions). This sprint focuses on setting up the Flutter environment, understanding project structure, and building core app features.
