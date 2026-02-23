@@ -1,4 +1,5 @@
 import 'screens/greenguide_demo_screen.dart';
+import 'screens/asset_demo_screen.dart';
 import 'screens/responsive_demo.dart';
 import 'screens/details_screen.dart';
 import 'screens/state_management_demo.dart';
@@ -47,6 +48,7 @@ class MyApp extends StatelessWidget {
         '/state-management-demo': (context) => StateManagementDemo(),
         '/details': (context) => DetailsScreen(),
         '/responsive-demo': (context) => ResponsiveDemo(),
+        '/asset-demo': (context) => AssetDemoScreen(),
         '/welcome': (context) => const WelcomeScreen(),
         '/login': (context) => const LoginScreen(),
         '/widget-tree-demo': (context) => const WidgetTreeDemoScreen(),

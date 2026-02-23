@@ -1336,69 +1336,112 @@ service cloud.firestore {
 
 ---
 
-## Sprint #2: Managing Local UI State with setState and Stateful Logic
+## Sprint #2: Managing Images, Icons, and Local Assets in Flutter Projects
 
-This section demonstrates how to manage local UI state in Flutter using setState() within Stateful widgets. The example below shows a simple counter app that updates the UI in real time.
+This section explains how to organize, register, and display local assets (images, icons) in your Flutter app. Assets are non-code resources that enhance your app’s visuals and user experience.
 
-### StateManagementDemo Screen Example
+### Asset Folder Structure
 
-**state_management_demo.dart:**
+```
+flutter_application/
+  assets/
+    images/
+      logo.png
+      banner.jpg
+      background.png
+    icons/
+      star.png
+      profile.png
+```
+
+### Registering Assets in pubspec.yaml
+
+```yaml
+flutter:
+  assets:
+    - assets/images/
+    - assets/icons/
+```
+
+### Displaying Local Images
+
+```dart
+Image.asset(
+  'assets/images/logo.png',
+  width: 150,
+  height: 150,
+  fit: BoxFit.cover,
+)
+```
+
+Images can also be used as backgrounds:
+
+```dart
+Container(
+  decoration: BoxDecoration(
+    image: DecorationImage(
+      image: AssetImage('assets/images/background.png'),
+      fit: BoxFit.cover,
+    ),
+  ),
+  child: Center(
+    child: Text(
+      'Welcome to Flutter!',
+      style: TextStyle(color: Colors.white, fontSize: 22),
+    ),
+  ),
+);
+```
+
+### Using Built-in Icons
+
+```dart
+Row(
+  mainAxisAlignment: MainAxisAlignment.center,
+  children: [
+    Icon(Icons.star, color: Colors.amber, size: 32),
+    SizedBox(width: 10),
+    Text('Starred', style: TextStyle(fontSize: 18)),
+  ],
+);
+```
+
+For Cupertino icons:
+
+```dart
+import 'package:flutter/cupertino.dart';
+Icon(CupertinoIcons.heart, color: Colors.red);
+```
+
+### AssetDemoScreen Example
 
 ```dart
 import 'package:flutter/material.dart';
 
-class StateManagementDemo extends StatefulWidget {
-  @override
-  _StateManagementDemoState createState() => _StateManagementDemoState();
-}
-
-class _StateManagementDemoState extends State<StateManagementDemo> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  void _decrementCounter() {
-    setState(() {
-      if (_counter > 0) _counter--;
-    });
-  }
-
+class AssetDemoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('State Management Demo')),
-      body: Container(
-        color: _counter >= 5 ? Colors.greenAccent : Colors.white,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('Button pressed:', style: TextStyle(fontSize: 18)),
-              Text(
-                '$_counter times',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                    onPressed: _incrementCounter,
-                    child: Text('Increment'),
-                  ),
-                  SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: _decrementCounter,
-                    child: Text('Decrement'),
-                  ),
-                ],
-              ),
-            ],
-          ),
+      appBar: AppBar(title: Text('Assets Demo')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset('assets/images/logo.png', width: 120),
+            SizedBox(height: 20),
+            Text('Powered by Flutter', style: TextStyle(fontSize: 20)),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.flutter_dash, color: Colors.blue, size: 36),
+                SizedBox(width: 10),
+                Icon(Icons.android, color: Colors.green, size: 36),
+                SizedBox(width: 10),
+                Icon(Icons.apple, color: Colors.grey, size: 36),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -1406,78 +1449,14 @@ class _StateManagementDemoState extends State<StateManagementDemo> {
 }
 ```
 
-### Reflection
-
-- StatelessWidget is fixed and unchanging; StatefulWidget updates dynamically.
-- setState() is essential for Flutter’s reactive UI model, updating only affected widgets.
-- Improper use of setState() (e.g., outside event handlers or inside build) can cause performance issues or infinite loops.
-
----
-
-## Sprint #2: Creating Reusable Custom Widgets for Modular UI Design
-
-This section demonstrates how to build and reuse custom widgets in Flutter for modular, scalable UI design. The InfoCard widget is used as an example and reused across multiple screens.
-
-### InfoCard Widget Definition
-
-**lib/widgets/info_card.dart:**
-
-```dart
-import 'package:flutter/material.dart';
-
-class InfoCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-
-  const InfoCard({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    Key? key,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.all(12),
-      elevation: 4,
-      child: ListTile(
-        leading: Icon(icon, color: Colors.teal, size: 32),
-        title: Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(subtitle),
-      ),
-    );
-  }
-}
-```
-
-### Usage Example in HomeScreen
-
-**lib/screens/home_screen.dart:**
-
-```dart
-InfoCard(title: 'Profile', subtitle: 'View details', icon: Icons.person),
-InfoCard(title: 'Settings', subtitle: 'Manage preferences', icon: Icons.settings),
-InfoCard(title: 'Logout', subtitle: 'Exit your account', icon: Icons.exit_to_app),
-```
-
-### Usage Example in DetailsScreen
-
-**lib/screens/details_screen.dart:**
-
-```dart
-InfoCard(
-  title: 'Account Info',
-  subtitle: 'User details and subscription',
-  icon: Icons.info,
-)
-```
+### Screenshots
+- App displaying logo and icons
+- Project folder structure
+- pubspec.yaml asset registration
 
 ### Reflection
-
-- Reusable widgets reduce code duplication and improve maintainability.
-- Modular design allows teams to scale and update UI efficiently.
-- Consistent widget usage ensures a unified look and feel across screens.
+- Proper asset registration in pubspec.yaml is essential for loading images and icons.
+- Common errors include incorrect file paths and YAML indentation.
+- Asset management supports scalability and maintainability in large apps.
 
 ---

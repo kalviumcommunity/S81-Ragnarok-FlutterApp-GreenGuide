@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class ScrollableViews extends StatelessWidget {
+  const ScrollableViews({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -12,7 +14,7 @@ class ScrollableViews extends StatelessWidget {
               padding: EdgeInsets.all(8.0),
               child: Text('ListView Example', style: TextStyle(fontSize: 18)),
             ),
-            Container(
+            SizedBox(
               height: 200,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
@@ -32,7 +34,7 @@ class ScrollableViews extends StatelessWidget {
               padding: EdgeInsets.all(8.0),
               child: Text('GridView Example', style: TextStyle(fontSize: 18)),
             ),
-            Container(
+            SizedBox(
               height: 400,
               child: GridView.builder(
                 physics: NeverScrollableScrollPhysics(),
