@@ -1336,55 +1336,83 @@ service cloud.firestore {
 
 ---
 
-## Sprint #2: Hot Reload, Debug Console, and Flutter DevTools Demonstration
+## Sprint #2: Applying Consistent Styles, Colors, and Text Themes Across the App
 
-This section demonstrates the use of Flutter’s Hot Reload, Debug Console, and DevTools for rapid development, debugging, and performance analysis.
+This section demonstrates how to use ListView and GridView widgets to create scrollable layouts in Flutter, with consistent styling and color themes.
 
-### 1. Hot Reload Demonstration
+### ScrollableViews Screen Example
 
-- **Step:** Changed the AppBar text in `dashboard_screen.dart` from `Welcome, User` to `Welcome to Hot Reload, User!`.
-- **How to Use:**
-  1. Run the app using `flutter run` or from VS Code.
-  2. Save the file and use Hot Reload (press `r` in the terminal or click the Hot Reload button).
-  3. The updated text appears instantly without restarting the app.
+**scrollable_views.dart:**
 
-**Screenshot:**
-> ![Hot Reload Demo](screenshots/hot_reload_demo.png)
+```dart
+import 'package:flutter/material.dart';
 
-### 2. Debug Console Demonstration
-
-- **Step:** Added a `debugPrint` statement when marking a tip as completed in `dashboard_screen.dart`.
-- **How to Use:**
-  1. Mark any tip as completed in the app.
-  2. Observe the Debug Console for a log like: `Tip "<title>" marked as: true`.
-
-**Screenshot:**
-> ![Debug Console Log](screenshots/debug_console_log.png)
-
-### 3. Flutter DevTools Demonstration
-
-- **How to Use:**
-  1. Run the app in debug mode.
-  2. Open DevTools from VS Code (command palette: "Open DevTools") or run `flutter pub global run devtools` in the terminal.
-  3. Use the Widget Inspector to explore the widget tree, or the Performance tab to analyze rendering.
-
-**Screenshot:**
-> ![DevTools Widget Inspector](screenshots/devtools_widget_inspector.png)
-
----
+class ScrollableViews extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Scrollable Views')),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text('ListView Example', style: TextStyle(fontSize: 18)),
+            ),
+            Container(
+              height: 200,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: 6,
+                itemBuilder: (context, index) {
+                  return Container(
+                    width: 150,
+                    margin: EdgeInsets.all(8),
+                    color: Colors.teal[100 * (index + 2)],
+                    child: Center(child: Text('Card $index')),
+                  );
+                },
+              ),
+            ),
+            Divider(thickness: 2),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text('GridView Example', style: TextStyle(fontSize: 18)),
+            ),
+            Container(
+              height: 400,
+              child: GridView.builder(
+                physics: NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                ),
+                itemCount: 6,
+                itemBuilder: (context, index) {
+                  return Container(
+                    color: Colors.primaries[index % Colors.primaries.length],
+                    child: Center(
+                      child: Text('Tile $index',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
 
 ### Reflection
 
-**How does Hot Reload improve productivity?**
-
-Hot Reload allows developers to see code changes instantly without restarting the app or losing state. This speeds up UI iteration, experimentation, and bug fixing, making the development process much more efficient.
-
-**Why is DevTools useful for debugging and optimization?**
-
-Flutter DevTools provides powerful tools for inspecting the widget tree, monitoring performance, tracking memory usage, and debugging layout issues. It helps identify bottlenecks and optimize the app for a smoother user experience.
-
-**How can you use these tools in a team development workflow?**
-
-Teams can use Hot Reload for rapid prototyping, Debug Console for collaborative debugging, and DevTools for shared performance analysis. These tools help maintain high code quality, speed up reviews, and ensure everyone can quickly identify and fix issues.
+- ListView is ideal for vertical or horizontal lists, while GridView is best for multi-column layouts.
+- ListView.builder and GridView.builder optimize performance for large datasets by rendering only visible items.
+- Consistent use of colors and text styles across widgets improves app aesthetics and user experience.
 
 ---
