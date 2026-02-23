@@ -1625,3 +1625,96 @@ Navigator.push(
 - Integrating animations makes the app feel polished and professional.
 
 ---
+
+## Sprint #10: Setting Up Firebase Project and Connecting It to Flutter App
+
+This section explains how to create a Firebase project, link it to your Flutter app, and verify successful integration. Firebase enables authentication, real-time databases, cloud storage, and analytics for modern mobile apps.
+
+### Firebase Setup Steps
+
+1. **Create a Firebase Project**
+   - Go to [Firebase Console](https://console.firebase.google.com/).
+   - Click "Add Project" → "Create New Project".
+   - Enter project name (e.g., smart_mobile_app) and initialize.
+
+2. **Register Your Flutter App**
+   - In Firebase Dashboard, click Add App → Android.
+   - Enter Android package name (see `android/app/build.gradle` → `applicationId`).
+   - Download `google-services.json` and place it in:
+     - `android/app/google-services.json`
+
+3. **Add Firebase SDK to Flutter**
+   - In `pubspec.yaml`:
+
+```yaml
+dependencies:
+  firebase_core: ^3.0.0
+  firebase_auth: ^5.0.0
+  cloud_firestore: ^5.0.0
+```
+
+   - Run:
+
+```
+flutter pub get
+```
+
+4. **Configure Android for Firebase**
+   - In `android/build.gradle`:
+
+```
+classpath 'com.google.gms:google-services:4.4.0'
+```
+
+   - In `android/app/build.gradle`:
+
+```
+apply plugin: 'com.google.gms.google-services'
+```
+
+5. **Initialize Firebase in main.dart**
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Firebase Connected App',
+      home: Scaffold(
+        appBar: AppBar(title: Text('Firebase Setup Complete')),
+        body: Center(child: Text('Your app is now connected to Firebase!')),
+      ),
+    );
+  }
+}
+```
+
+### Folder Paths for Firebase Config Files
+- `android/app/google-services.json`
+- `ios/Runner/GoogleService-Info.plist` (for iOS)
+
+### Verification
+- Run your app and check Firebase Console → Project Settings → Your Apps.
+- App should appear as active.
+- Terminal logs: `Firebase has been successfully initialized!`
+
+### Screenshots
+- Firebase Console showing connected app
+- App running with Firebase setup complete
+- Folder structure with config files
+
+### Reflection
+- The most important step is placing `google-services.json` in the correct folder and initializing Firebase in `main.dart`.
+- Common errors: missing config file, Gradle plugin not applied, missing `await Firebase.initializeApp()`.
+- Firebase setup prepares your app for authentication, Firestore, and cloud features.
+
+---
