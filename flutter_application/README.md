@@ -1460,3 +1460,168 @@ class AssetDemoScreen extends StatelessWidget {
 - Asset management supports scalability and maintainability in large apps.
 
 ---
+
+## Sprint #9: Adding Animations and Transitions to Improve User Experience
+
+This section demonstrates how to add smooth animations and transitions to your Flutter app using both implicit and explicit animation widgets. Animations enhance UX by guiding attention, providing feedback, and making transitions feel natural.
+
+### Implicit Animations
+
+**AnimatedContainer Example:**
+```dart
+import 'package:flutter/material.dart';
+
+class AnimatedBoxDemo extends StatefulWidget {
+  @override
+  _AnimatedBoxDemoState createState() => _AnimatedBoxDemoState();
+}
+
+class _AnimatedBoxDemoState extends State<AnimatedBoxDemo> {
+  bool _toggled = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('AnimatedContainer Demo')),
+      body: Center(
+        child: AnimatedContainer(
+          width: _toggled ? 200 : 100,
+          height: _toggled ? 100 : 200,
+          color: _toggled ? Colors.teal : Colors.orange,
+          duration: Duration(seconds: 1),
+          curve: Curves.easeInOut,
+          child: Center(
+            child: Text('Tap Me!', style: TextStyle(color: Colors.white, fontSize: 18)),
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          setState(() {
+            _toggled = !_toggled;
+          });
+        },
+        child: Icon(Icons.play_arrow),
+      ),
+    );
+  }
+}
+```
+
+**AnimatedOpacity Example:**
+```dart
+import 'package:flutter/material.dart';
+
+class AnimatedOpacityDemo extends StatefulWidget {
+  @override
+  _AnimatedOpacityDemoState createState() => _AnimatedOpacityDemoState();
+}
+
+class _AnimatedOpacityDemoState extends State<AnimatedOpacityDemo> {
+  bool _visible = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('AnimatedOpacity Demo')),
+      body: Center(
+        child: AnimatedOpacity(
+          opacity: _visible ? 1.0 : 0.2,
+          duration: Duration(seconds: 1),
+          child: Image.asset('assets/images/logo.png', width: 150),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          setState(() {
+            _visible = !_visible;
+          });
+        },
+        child: Icon(Icons.visibility),
+      ),
+    );
+  }
+}
+```
+
+### Explicit Animations
+
+**Rotation Animation Example:**
+```dart
+import 'package:flutter/material.dart';
+
+class RotateLogoDemo extends StatefulWidget {
+  @override
+  _RotateLogoDemoState createState() => _RotateLogoDemoState();
+}
+
+class _RotateLogoDemoState extends State<RotateLogoDemo>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Explicit Animation Demo')),
+      body: Center(
+        child: RotationTransition(
+          turns: _controller,
+          child: Image.asset('assets/images/logo.png', width: 100),
+        ),
+      ),
+    );
+  }
+}
+```
+
+### Page Transitions
+
+**Slide Transition Example:**
+```dart
+Navigator.push(
+  context,
+  PageRouteBuilder(
+    transitionDuration: Duration(milliseconds: 700),
+    pageBuilder: (context, animation, secondaryAnimation) => NextPage(),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(1.0, 0.0),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeInOut,
+        )),
+        child: child,
+      );
+    },
+  ),
+);
+```
+
+### Screenshots & GIFs
+- AnimatedContainer and AnimatedOpacity in action
+- Rotating logo animation
+- Slide transition between screens
+
+### Reflection
+- Animations guide user attention and provide feedback, improving UX.
+- Implicit animations are easy for simple transitions; explicit animations offer full control.
+- Integrating animations makes the app feel polished and professional.
+
+---
