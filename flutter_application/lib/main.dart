@@ -1,4 +1,5 @@
 import 'screens/greenguide_demo_screen.dart';
+import 'screens/state_management_demo.dart';
 import 'screens/user_input_form.dart';
 import 'screens/scrollable_views.dart';
 import 'package:flutter/material.dart';
@@ -41,6 +42,7 @@ class MyApp extends StatelessWidget {
         '/responsive': (context) => const ResponsiveHome(),
         '/scrollable-views': (context) => ScrollableViews(),
         '/user-input-form': (context) => UserInputForm(),
+        '/state-management-demo': (context) => StateManagementDemo(),
         '/welcome': (context) => const WelcomeScreen(),
         '/login': (context) => const LoginScreen(),
         '/widget-tree-demo': (context) => const WidgetTreeDemoScreen(),

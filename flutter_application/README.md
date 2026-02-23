@@ -1336,55 +1336,80 @@ service cloud.firestore {
 
 ---
 
-## Sprint #2: Hot Reload, Debug Console, and Flutter DevTools Demonstration
+## Sprint #2: Managing Local UI State with setState and Stateful Logic
 
-This section demonstrates the use of Flutter’s Hot Reload, Debug Console, and DevTools for rapid development, debugging, and performance analysis.
+This section demonstrates how to manage local UI state in Flutter using setState() within Stateful widgets. The example below shows a simple counter app that updates the UI in real time.
 
-### 1. Hot Reload Demonstration
+### StateManagementDemo Screen Example
 
-- **Step:** Changed the AppBar text in `dashboard_screen.dart` from `Welcome, User` to `Welcome to Hot Reload, User!`.
-- **How to Use:**
-  1. Run the app using `flutter run` or from VS Code.
-  2. Save the file and use Hot Reload (press `r` in the terminal or click the Hot Reload button).
-  3. The updated text appears instantly without restarting the app.
+**state_management_demo.dart:**
 
-**Screenshot:**
-> ![Hot Reload Demo](screenshots/hot_reload_demo.png)
+```dart
+import 'package:flutter/material.dart';
 
-### 2. Debug Console Demonstration
+class StateManagementDemo extends StatefulWidget {
+  @override
+  _StateManagementDemoState createState() => _StateManagementDemoState();
+}
 
-- **Step:** Added a `debugPrint` statement when marking a tip as completed in `dashboard_screen.dart`.
-- **How to Use:**
-  1. Mark any tip as completed in the app.
-  2. Observe the Debug Console for a log like: `Tip "<title>" marked as: true`.
+class _StateManagementDemoState extends State<StateManagementDemo> {
+  int _counter = 0;
 
-**Screenshot:**
-> ![Debug Console Log](screenshots/debug_console_log.png)
+  void _incrementCounter() {
+    setState(() {
+      _counter++;
+    });
+  }
 
-### 3. Flutter DevTools Demonstration
+  void _decrementCounter() {
+    setState(() {
+      if (_counter > 0) _counter--;
+    });
+  }
 
-- **How to Use:**
-  1. Run the app in debug mode.
-  2. Open DevTools from VS Code (command palette: "Open DevTools") or run `flutter pub global run devtools` in the terminal.
-  3. Use the Widget Inspector to explore the widget tree, or the Performance tab to analyze rendering.
-
-**Screenshot:**
-> ![DevTools Widget Inspector](screenshots/devtools_widget_inspector.png)
-
----
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('State Management Demo')),
+      body: Container(
+        color: _counter >= 5 ? Colors.greenAccent : Colors.white,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Button pressed:', style: TextStyle(fontSize: 18)),
+              Text(
+                '$_counter times',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: _incrementCounter,
+                    child: Text('Increment'),
+                  ),
+                  SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: _decrementCounter,
+                    child: Text('Decrement'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+```
 
 ### Reflection
 
-**How does Hot Reload improve productivity?**
-
-Hot Reload allows developers to see code changes instantly without restarting the app or losing state. This speeds up UI iteration, experimentation, and bug fixing, making the development process much more efficient.
-
-**Why is DevTools useful for debugging and optimization?**
-
-Flutter DevTools provides powerful tools for inspecting the widget tree, monitoring performance, tracking memory usage, and debugging layout issues. It helps identify bottlenecks and optimize the app for a smoother user experience.
-
-**How can you use these tools in a team development workflow?**
-
-Teams can use Hot Reload for rapid prototyping, Debug Console for collaborative debugging, and DevTools for shared performance analysis. These tools help maintain high code quality, speed up reviews, and ensure everyone can quickly identify and fix issues.
+- StatelessWidget is fixed and unchanging; StatefulWidget updates dynamically.
+- setState() is essential for Flutter’s reactive UI model, updating only affected widgets.
+- Improper use of setState() (e.g., outside event handlers or inside build) can cause performance issues or infinite loops.
 
 ---
