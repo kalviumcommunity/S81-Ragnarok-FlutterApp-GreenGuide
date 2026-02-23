@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class GreenGuideDemoScreen extends StatelessWidget {
+  const GreenGuideDemoScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
