@@ -1,4 +1,5 @@
 import 'screens/greenguide_demo_screen.dart';
+import 'screens/scrollable_views.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'screens/welcome_screen.dart';
@@ -37,6 +38,7 @@ class MyApp extends StatelessWidget {
         '/second': (context) => SecondScreen(),
         '/greenguide-demo': (context) => GreenGuideDemoScreen(),
         '/responsive': (context) => const ResponsiveHome(),
+        '/scrollable-views': (context) => ScrollableViews(),
         '/welcome': (context) => const WelcomeScreen(),
         '/login': (context) => const LoginScreen(),
         '/widget-tree-demo': (context) => const WidgetTreeDemoScreen(),

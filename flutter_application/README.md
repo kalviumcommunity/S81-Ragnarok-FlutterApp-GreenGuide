@@ -107,6 +107,88 @@ Named routes keep navigation logic organized and decoupled from widget code. Thi
 Flutter’s Navigator maintains a stack of Route objects. When you navigate, a new Route is pushed; when you go back, the top Route is popped, revealing the previous screen. This enables deep navigation flows and back navigation out-of-the-box.
 
 ---
+
+## Sprint #2: Scrollable Views with ListView & GridView
+
+This section demonstrates how to build scrollable layouts in Flutter using ListView and GridView widgets. These allow users to efficiently browse lists and grids of content, such as feeds, galleries, or product catalogs.
+
+### ScrollableViews Screen Implementation
+
+**scrollable_views.dart:**
+
+```dart
+import 'package:flutter/material.dart';
+
+class ScrollableViews extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Scrollable Views Example')),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text('ListView Example', style: TextStyle(fontSize: 18)),
+            ),
+            Container(
+              height: 200,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: 6,
+                itemBuilder: (context, index) {
+                  return Container(
+                    width: 150,
+                    margin: EdgeInsets.all(8),
+                    color: Colors.teal[100 * (index + 2)],
+                    child: Center(child: Text('Card $index')),
+                  );
+                },
+              ),
+            ),
+            Divider(thickness: 2),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text('GridView Example', style: TextStyle(fontSize: 18)),
+            ),
+            Container(
+              height: 400,
+              child: GridView.builder(
+                physics: NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                ),
+                itemCount: 6,
+                itemBuilder: (context, index) {
+                  return Container(
+                    color: Colors.primaries[index % Colors.primaries.length],
+                    child: Center(
+                      child: Text('Tile $index',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+
+### Reflection
+
+- **ListView** and **GridView** make it easy to display large, scrollable datasets efficiently.
+- Using builder constructors (ListView.builder, GridView.builder) improves performance by rendering only visible items.
+- Proper spacing and scroll direction enhance user experience and app clarity.
+
+---
+
 ## GreenGuide – Sustainable Habits Companion
 
 GreenGuide is a cross-platform Flutter app concept that helps users build simple, sustainable daily habits (like saving water, reducing waste, and tracking eco-friendly actions). This sprint focuses on setting up the Flutter environment, understanding project structure, and building core app features.
