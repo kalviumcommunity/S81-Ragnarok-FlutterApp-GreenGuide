@@ -1,4 +1,5 @@
 import 'screens/greenguide_demo_screen.dart';
+import 'screens/responsive_layout.dart';
 import 'screens/asset_demo_screen.dart';
 import 'screens/animated_box_demo.dart';
 import 'screens/animated_opacity_demo.dart';
@@ -49,6 +50,7 @@ class MyApp extends StatelessWidget {
         '/second': (context) => SecondScreen(),
         '/greenguide-demo': (context) => GreenGuideDemoScreen(),
         '/responsive': (context) => const ResponsiveHome(),
+        '/responsive-layout': (context) => ResponsiveLayout(),
         '/scrollable-views': (context) => ScrollableViews(),
         '/user-input-form': (context) => UserInputForm(),
         '/state-management-demo': (context) => StateManagementDemo(),
