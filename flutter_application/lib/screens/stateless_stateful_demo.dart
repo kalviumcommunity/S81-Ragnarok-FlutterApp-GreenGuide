@@ -346,7 +346,7 @@ class _ThemeToggleWidgetState extends State<ThemeToggleWidget> {
           Switch(
             value: _isDarkMode,
             onChanged: (value) => _toggleTheme(),
-            activeColor: Colors.amber,
+            activeThumbColor: Colors.amber,
             inactiveThumbColor: Colors.orange,
           ),
         ],

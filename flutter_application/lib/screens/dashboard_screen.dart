@@ -121,7 +121,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   SizedBox(height: isTablet ? 16 : 12),
                   DropdownButtonFormField(
-                    value: _selectedCategory,
+                    initialValue: _selectedCategory,
                     decoration: InputDecoration(
                       labelText: 'Category',
                       border: OutlineInputBorder(
