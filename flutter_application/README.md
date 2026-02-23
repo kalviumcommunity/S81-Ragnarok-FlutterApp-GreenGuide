@@ -107,6 +107,88 @@ Named routes keep navigation logic organized and decoupled from widget code. Thi
 Flutter’s Navigator maintains a stack of Route objects. When you navigate, a new Route is pushed; when you go back, the top Route is popped, revealing the previous screen. This enables deep navigation flows and back navigation out-of-the-box.
 
 ---
+
+## Sprint #2: Scrollable Views with ListView & GridView
+
+This section demonstrates how to build scrollable layouts in Flutter using ListView and GridView widgets. These allow users to efficiently browse lists and grids of content, such as feeds, galleries, or product catalogs.
+
+### ScrollableViews Screen Implementation
+
+**scrollable_views.dart:**
+
+```dart
+import 'package:flutter/material.dart';
+
+class ScrollableViews extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Scrollable Views Example')),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text('ListView Example', style: TextStyle(fontSize: 18)),
+            ),
+            Container(
+              height: 200,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: 6,
+                itemBuilder: (context, index) {
+                  return Container(
+                    width: 150,
+                    margin: EdgeInsets.all(8),
+                    color: Colors.teal[100 * (index + 2)],
+                    child: Center(child: Text('Card $index')),
+                  );
+                },
+              ),
+            ),
+            Divider(thickness: 2),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text('GridView Example', style: TextStyle(fontSize: 18)),
+            ),
+            Container(
+              height: 400,
+              child: GridView.builder(
+                physics: NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                ),
+                itemCount: 6,
+                itemBuilder: (context, index) {
+                  return Container(
+                    color: Colors.primaries[index % Colors.primaries.length],
+                    child: Center(
+                      child: Text('Tile $index',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+
+### Reflection
+
+- **ListView** and **GridView** make it easy to display large, scrollable datasets efficiently.
+- Using builder constructors (ListView.builder, GridView.builder) improves performance by rendering only visible items.
+- Proper spacing and scroll direction enhance user experience and app clarity.
+
+---
+
 ## GreenGuide – Sustainable Habits Companion
 
 GreenGuide is a cross-platform Flutter app concept that helps users build simple, sustainable daily habits (like saving water, reducing waste, and tracking eco-friendly actions). This sprint focuses on setting up the Flutter environment, understanding project structure, and building core app features.
@@ -1254,55 +1336,385 @@ service cloud.firestore {
 
 ---
 
-## Sprint #2: Hot Reload, Debug Console, and Flutter DevTools Demonstration
+## Sprint #2: Managing Images, Icons, and Local Assets in Flutter Projects
 
-This section demonstrates the use of Flutter’s Hot Reload, Debug Console, and DevTools for rapid development, debugging, and performance analysis.
+This section explains how to organize, register, and display local assets (images, icons) in your Flutter app. Assets are non-code resources that enhance your app’s visuals and user experience.
 
-### 1. Hot Reload Demonstration
+### Asset Folder Structure
 
-- **Step:** Changed the AppBar text in `dashboard_screen.dart` from `Welcome, User` to `Welcome to Hot Reload, User!`.
-- **How to Use:**
-  1. Run the app using `flutter run` or from VS Code.
-  2. Save the file and use Hot Reload (press `r` in the terminal or click the Hot Reload button).
-  3. The updated text appears instantly without restarting the app.
+```
+flutter_application/
+  assets/
+    images/
+      logo.png
+      banner.jpg
+      background.png
+    icons/
+      star.png
+      profile.png
+```
 
-**Screenshot:**
-> ![Hot Reload Demo](screenshots/hot_reload_demo.png)
+### Registering Assets in pubspec.yaml
 
-### 2. Debug Console Demonstration
+```yaml
+flutter:
+  assets:
+    - assets/images/
+    - assets/icons/
+```
 
-- **Step:** Added a `debugPrint` statement when marking a tip as completed in `dashboard_screen.dart`.
-- **How to Use:**
-  1. Mark any tip as completed in the app.
-  2. Observe the Debug Console for a log like: `Tip "<title>" marked as: true`.
+### Displaying Local Images
 
-**Screenshot:**
-> ![Debug Console Log](screenshots/debug_console_log.png)
+```dart
+Image.asset(
+  'assets/images/logo.png',
+  width: 150,
+  height: 150,
+  fit: BoxFit.cover,
+)
+```
 
-### 3. Flutter DevTools Demonstration
+Images can also be used as backgrounds:
 
-- **How to Use:**
-  1. Run the app in debug mode.
-  2. Open DevTools from VS Code (command palette: "Open DevTools") or run `flutter pub global run devtools` in the terminal.
-  3. Use the Widget Inspector to explore the widget tree, or the Performance tab to analyze rendering.
+```dart
+Container(
+  decoration: BoxDecoration(
+    image: DecorationImage(
+      image: AssetImage('assets/images/background.png'),
+      fit: BoxFit.cover,
+    ),
+  ),
+  child: Center(
+    child: Text(
+      'Welcome to Flutter!',
+      style: TextStyle(color: Colors.white, fontSize: 22),
+    ),
+  ),
+);
+```
 
-**Screenshot:**
-> ![DevTools Widget Inspector](screenshots/devtools_widget_inspector.png)
+### Using Built-in Icons
+
+```dart
+Row(
+  mainAxisAlignment: MainAxisAlignment.center,
+  children: [
+    Icon(Icons.star, color: Colors.amber, size: 32),
+    SizedBox(width: 10),
+    Text('Starred', style: TextStyle(fontSize: 18)),
+  ],
+);
+```
+
+For Cupertino icons:
+
+```dart
+import 'package:flutter/cupertino.dart';
+Icon(CupertinoIcons.heart, color: Colors.red);
+```
+
+### AssetDemoScreen Example
+
+```dart
+import 'package:flutter/material.dart';
+
+class AssetDemoScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Assets Demo')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset('assets/images/logo.png', width: 120),
+            SizedBox(height: 20),
+            Text('Powered by Flutter', style: TextStyle(fontSize: 20)),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.flutter_dash, color: Colors.blue, size: 36),
+                SizedBox(width: 10),
+                Icon(Icons.android, color: Colors.green, size: 36),
+                SizedBox(width: 10),
+                Icon(Icons.apple, color: Colors.grey, size: 36),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+
+### Screenshots
+- App displaying logo and icons
+- Project folder structure
+- pubspec.yaml asset registration
+
+### Reflection
+- Proper asset registration in pubspec.yaml is essential for loading images and icons.
+- Common errors include incorrect file paths and YAML indentation.
+- Asset management supports scalability and maintainability in large apps.
 
 ---
 
+## Sprint #9: Adding Animations and Transitions to Improve User Experience
+
+This section demonstrates how to add smooth animations and transitions to your Flutter app using both implicit and explicit animation widgets. Animations enhance UX by guiding attention, providing feedback, and making transitions feel natural.
+
+### Implicit Animations
+
+**AnimatedContainer Example:**
+```dart
+import 'package:flutter/material.dart';
+
+class AnimatedBoxDemo extends StatefulWidget {
+  @override
+  _AnimatedBoxDemoState createState() => _AnimatedBoxDemoState();
+}
+
+class _AnimatedBoxDemoState extends State<AnimatedBoxDemo> {
+  bool _toggled = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('AnimatedContainer Demo')),
+      body: Center(
+        child: AnimatedContainer(
+          width: _toggled ? 200 : 100,
+          height: _toggled ? 100 : 200,
+          color: _toggled ? Colors.teal : Colors.orange,
+          duration: Duration(seconds: 1),
+          curve: Curves.easeInOut,
+          child: Center(
+            child: Text('Tap Me!', style: TextStyle(color: Colors.white, fontSize: 18)),
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          setState(() {
+            _toggled = !_toggled;
+          });
+        },
+        child: Icon(Icons.play_arrow),
+      ),
+    );
+  }
+}
+```
+
+**AnimatedOpacity Example:**
+```dart
+import 'package:flutter/material.dart';
+
+class AnimatedOpacityDemo extends StatefulWidget {
+  @override
+  _AnimatedOpacityDemoState createState() => _AnimatedOpacityDemoState();
+}
+
+class _AnimatedOpacityDemoState extends State<AnimatedOpacityDemo> {
+  bool _visible = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('AnimatedOpacity Demo')),
+      body: Center(
+        child: AnimatedOpacity(
+          opacity: _visible ? 1.0 : 0.2,
+          duration: Duration(seconds: 1),
+          child: Image.asset('assets/images/logo.png', width: 150),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          setState(() {
+            _visible = !_visible;
+          });
+        },
+        child: Icon(Icons.visibility),
+      ),
+    );
+  }
+}
+```
+
+### Explicit Animations
+
+**Rotation Animation Example:**
+```dart
+import 'package:flutter/material.dart';
+
+class RotateLogoDemo extends StatefulWidget {
+  @override
+  _RotateLogoDemoState createState() => _RotateLogoDemoState();
+}
+
+class _RotateLogoDemoState extends State<RotateLogoDemo>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Explicit Animation Demo')),
+      body: Center(
+        child: RotationTransition(
+          turns: _controller,
+          child: Image.asset('assets/images/logo.png', width: 100),
+        ),
+      ),
+    );
+  }
+}
+```
+
+### Page Transitions
+
+**Slide Transition Example:**
+```dart
+Navigator.push(
+  context,
+  PageRouteBuilder(
+    transitionDuration: Duration(milliseconds: 700),
+    pageBuilder: (context, animation, secondaryAnimation) => NextPage(),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(1.0, 0.0),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeInOut,
+        )),
+        child: child,
+      );
+    },
+  ),
+);
+```
+
+### Screenshots & GIFs
+- AnimatedContainer and AnimatedOpacity in action
+- Rotating logo animation
+- Slide transition between screens
+
 ### Reflection
+- Animations guide user attention and provide feedback, improving UX.
+- Implicit animations are easy for simple transitions; explicit animations offer full control.
+- Integrating animations makes the app feel polished and professional.
 
-**How does Hot Reload improve productivity?**
+---
 
-Hot Reload allows developers to see code changes instantly without restarting the app or losing state. This speeds up UI iteration, experimentation, and bug fixing, making the development process much more efficient.
+## Sprint #10: Setting Up Firebase Project and Connecting It to Flutter App
 
-**Why is DevTools useful for debugging and optimization?**
+This section explains how to create a Firebase project, link it to your Flutter app, and verify successful integration. Firebase enables authentication, real-time databases, cloud storage, and analytics for modern mobile apps.
 
-Flutter DevTools provides powerful tools for inspecting the widget tree, monitoring performance, tracking memory usage, and debugging layout issues. It helps identify bottlenecks and optimize the app for a smoother user experience.
+### Firebase Setup Steps
 
-**How can you use these tools in a team development workflow?**
+1. **Create a Firebase Project**
+   - Go to [Firebase Console](https://console.firebase.google.com/).
+   - Click "Add Project" → "Create New Project".
+   - Enter project name (e.g., smart_mobile_app) and initialize.
 
-Teams can use Hot Reload for rapid prototyping, Debug Console for collaborative debugging, and DevTools for shared performance analysis. These tools help maintain high code quality, speed up reviews, and ensure everyone can quickly identify and fix issues.
+2. **Register Your Flutter App**
+   - In Firebase Dashboard, click Add App → Android.
+   - Enter Android package name (see `android/app/build.gradle` → `applicationId`).
+   - Download `google-services.json` and place it in:
+     - `android/app/google-services.json`
+
+3. **Add Firebase SDK to Flutter**
+   - In `pubspec.yaml`:
+
+```yaml
+dependencies:
+  firebase_core: ^3.0.0
+  firebase_auth: ^5.0.0
+  cloud_firestore: ^5.0.0
+```
+
+   - Run:
+
+```
+flutter pub get
+```
+
+4. **Configure Android for Firebase**
+   - In `android/build.gradle`:
+
+```
+classpath 'com.google.gms:google-services:4.4.0'
+```
+
+   - In `android/app/build.gradle`:
+
+```
+apply plugin: 'com.google.gms.google-services'
+```
+
+5. **Initialize Firebase in main.dart**
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Firebase Connected App',
+      home: Scaffold(
+        appBar: AppBar(title: Text('Firebase Setup Complete')),
+        body: Center(child: Text('Your app is now connected to Firebase!')),
+      ),
+    );
+  }
+}
+```
+
+### Folder Paths for Firebase Config Files
+- `android/app/google-services.json`
+- `ios/Runner/GoogleService-Info.plist` (for iOS)
+
+### Verification
+- Run your app and check Firebase Console → Project Settings → Your Apps.
+- App should appear as active.
+- Terminal logs: `Firebase has been successfully initialized!`
+
+### Screenshots
+- Firebase Console showing connected app
+- App running with Firebase setup complete
+- Folder structure with config files
+
+### Reflection
+- The most important step is placing `google-services.json` in the correct folder and initializing Firebase in `main.dart`.
+- Common errors: missing config file, Gradle plugin not applied, missing `await Firebase.initializeApp()`.
+- Firebase setup prepares your app for authentication, Firestore, and cloud features.
 
 ---

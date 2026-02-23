@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/info_card.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -76,6 +77,10 @@ class HomeScreen extends StatelessWidget {
                   Navigator.pushNamed(context, '/second');
                 },
               ),
+              SizedBox(height: 24),
+              InfoCard(title: 'Profile', subtitle: 'View details', icon: Icons.person),
+              InfoCard(title: 'Settings', subtitle: 'Manage preferences', icon: Icons.settings),
+              InfoCard(title: 'Logout', subtitle: 'Exit your account', icon: Icons.exit_to_app),
             ],
           ),
         ),
