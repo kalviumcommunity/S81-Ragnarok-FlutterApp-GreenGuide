@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class UserInputForm extends StatefulWidget {
+  const UserInputForm({super.key});
+
   @override
   _UserInputFormState createState() => _UserInputFormState();
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class ResponsiveDemo extends StatelessWidget {
+  const ResponsiveDemo({super.key});
+
   @override
   Widget build(BuildContext context) {
     var screenWidth = MediaQuery.of(context).size.width;

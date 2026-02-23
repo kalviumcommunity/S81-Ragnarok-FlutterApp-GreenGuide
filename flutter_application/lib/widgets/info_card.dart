@@ -9,8 +9,8 @@ class InfoCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.icon,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
