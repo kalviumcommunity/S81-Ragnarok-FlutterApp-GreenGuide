@@ -10,6 +10,7 @@ import 'screens/user_input_form.dart';
 import 'screens/scrollable_views.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/responsive_home.dart';
 import 'screens/login_screen.dart';
@@ -21,7 +22,9 @@ import 'screens/second_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
   } catch (e) {
     print('Firebase initialization skipped in test environment');
   }
