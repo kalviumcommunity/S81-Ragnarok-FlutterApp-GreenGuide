@@ -1413,3 +1413,71 @@ class _StateManagementDemoState extends State<StateManagementDemo> {
 - Improper use of setState() (e.g., outside event handlers or inside build) can cause performance issues or infinite loops.
 
 ---
+
+## Sprint #2: Creating Reusable Custom Widgets for Modular UI Design
+
+This section demonstrates how to build and reuse custom widgets in Flutter for modular, scalable UI design. The InfoCard widget is used as an example and reused across multiple screens.
+
+### InfoCard Widget Definition
+
+**lib/widgets/info_card.dart:**
+
+```dart
+import 'package:flutter/material.dart';
+
+class InfoCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+
+  const InfoCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.all(12),
+      elevation: 4,
+      child: ListTile(
+        leading: Icon(icon, color: Colors.teal, size: 32),
+        title: Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(subtitle),
+      ),
+    );
+  }
+}
+```
+
+### Usage Example in HomeScreen
+
+**lib/screens/home_screen.dart:**
+
+```dart
+InfoCard(title: 'Profile', subtitle: 'View details', icon: Icons.person),
+InfoCard(title: 'Settings', subtitle: 'Manage preferences', icon: Icons.settings),
+InfoCard(title: 'Logout', subtitle: 'Exit your account', icon: Icons.exit_to_app),
+```
+
+### Usage Example in DetailsScreen
+
+**lib/screens/details_screen.dart:**
+
+```dart
+InfoCard(
+  title: 'Account Info',
+  subtitle: 'User details and subscription',
+  icon: Icons.info,
+)
+```
+
+### Reflection
+
+- Reusable widgets reduce code duplication and improve maintainability.
+- Modular design allows teams to scale and update UI efficiently.
+- Consistent widget usage ensures a unified look and feel across screens.
+
+---
