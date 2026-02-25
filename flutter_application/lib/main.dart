@@ -43,9 +43,10 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
+      home: AuthScreen(), // Set AuthScreen as the home widget
       initialRoute: '/', // Start with HomeScreen
       routes: {
-        '/': (context) => HomeScreen(),
+        '/': (context) => AuthScreen(),
         '/second': (context) => SecondScreen(),
         '/greenguide-demo': (context) => GreenGuideDemoScreen(),
         '/responsive': (context) => const ResponsiveHome(),
