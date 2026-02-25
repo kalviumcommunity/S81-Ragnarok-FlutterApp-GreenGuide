@@ -36,6 +36,157 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+# GreenGuide – Firebase Authentication (Email & Password)
+
+## Overview
+This Flutter app implements secure user authentication using Firebase Auth (Email & Password). Users can sign up, log in, and their authentication status is managed and synced with Firebase Console.
+
+## Setup Steps
+
+1. **Enable Email/Password Auth in Firebase Console**
+   - Go to Firebase Console → Authentication → Sign-in method.
+   - Enable Email/Password and click Save.
+
+2. **Add Dependencies**
+   ```yaml
+   dependencies:
+     firebase_core: ^3.0.0
+     firebase_auth: ^5.0.0
+   ```
+   Run:
+   ```
+   flutter pub get
+   ```
+
+3. **Initialize Firebase in main.dart**
+   ```dart
+   import 'package:flutter/material.dart';
+   import 'package:firebase_core/firebase_core.dart';
+   import 'firebase_options.dart';
+   import 'screens/auth_screen.dart';
+
+   void main() async {
+     WidgetsFlutterBinding.ensureInitialized();
+     await Firebase.initializeApp(
+       options: DefaultFirebaseOptions.currentPlatform,
+     );
+     runApp(MyApp());
+   }
+
+   class MyApp extends StatelessWidget {
+     @override
+     Widget build(BuildContext context) {
+       return MaterialApp(
+         title: 'Firebase Auth Demo',
+         home: AuthScreen(),
+       );
+     }
+   }
+   ```
+
+4. **Authentication UI & Logic (lib/screens/auth_screen.dart)**
+   ```dart
+   import 'package:flutter/material.dart';
+   import 'package:firebase_auth/firebase_auth.dart';
+
+   class AuthScreen extends StatefulWidget {
+     @override
+     _AuthScreenState createState() => _AuthScreenState();
+   }
+
+   class _AuthScreenState extends State<AuthScreen> {
+     final FirebaseAuth _auth = FirebaseAuth.instance;
+     final _emailController = TextEditingController();
+     final _passwordController = TextEditingController();
+     bool isLogin = true;
+
+     Future<void> _submitAuthForm() async {
+       try {
+         if (isLogin) {
+           await _auth.signInWithEmailAndPassword(
+             email: _emailController.text.trim(),
+             password: _passwordController.text.trim(),
+           );
+         } else {
+           await _auth.createUserWithEmailAndPassword(
+             email: _emailController.text.trim(),
+             password: _passwordController.text.trim(),
+           );
+         }
+         ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(content: Text(isLogin ? 'Login Successful!' : 'Signup Successful!')),
+         );
+       } on FirebaseAuthException catch (e) {
+         ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(content: Text(e.message ?? 'Authentication Error')),
+         );
+       }
+     }
+
+     @override
+     Widget build(BuildContext context) {
+       return Scaffold(
+         appBar: AppBar(title: Text('Firebase Auth Demo')),
+         body: Padding(
+           padding: EdgeInsets.all(16),
+           child: Column(
+             mainAxisAlignment: MainAxisAlignment.center,
+             children: [
+               TextField(
+                 controller: _emailController,
+                 decoration: InputDecoration(labelText: 'Email'),
+               ),
+               TextField(
+                 controller: _passwordController,
+                 obscureText: true,
+                 decoration: InputDecoration(labelText: 'Password'),
+               ),
+               SizedBox(height: 20),
+               ElevatedButton(
+                 onPressed: _submitAuthForm,
+                 child: Text(isLogin ? 'Login' : 'Signup'),
+               ),
+               TextButton(
+                 onPressed: () => setState(() => isLogin = !isLogin),
+                 child: Text(isLogin ? 'Create new account' : 'Already have an account? Login'),
+               ),
+             ],
+           ),
+         ),
+       );
+     }
+   }
+   ```
+
+5. **Logout & Auth State**
+   ```dart
+   FirebaseAuth.instance.authStateChanges().listen((User? user) {
+     if (user == null) {
+       print('User is signed out');
+     } else {
+       print('User is signed in: ${user.email}');
+     }
+   });
+
+   // Logout
+   await FirebaseAuth.instance.signOut();
+   ```
+
+## Screenshots
+
+- Authentication UI (Login/Signup)
+- Firebase Console “Users” table showing registered users
+
+## Reflection
+
+- **How does Firebase simplify authentication management?**
+  - Handles user identity, session, and security out-of-the-box, reducing backend complexity.
+- **What security features make it better than custom auth systems?**
+  - Built-in password hashing, email validation, session management, and enterprise-grade security.
+- **Challenges faced while implementing both flows?**
+  - Ensuring Firebase initialization, handling error messages, and UI state toggling.
+
+---
 ```
 
 **home_screen.dart:**
