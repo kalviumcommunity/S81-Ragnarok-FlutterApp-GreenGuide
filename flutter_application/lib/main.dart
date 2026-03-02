@@ -37,14 +37,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'GreenGuide',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
-        useMaterial3: true,
+      home: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (ctx, snapshot) {
+          if (snapshot.hasData) {
+            return HomeScreen();
+          }
+          return AuthScreen();
+        },
       ),
-      home: AuthScreen(), // Set AuthScreen as the home widget
-      initialRoute: '/', // Start with HomeScreen
+      initialRoute: '/',
       routes: {
         '/': (context) => AuthScreen(),
         '/second': (context) => SecondScreen(),
