@@ -18,6 +18,11 @@ import 'screens/widget_tree_demo.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/second_screen.dart';
 import 'screens/dashboard_screen.dart';
+import 'screens/add_plant_screen.dart';
+import 'screens/my_plants_screen.dart';
+import 'screens/nursery_store_screen.dart';
+import 'screens/plant_scan_screen.dart';
+import 'screens/reminders_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -54,6 +59,11 @@ class MyApp extends StatelessWidget {
         '/widget-tree-demo': (context) => const WidgetTreeDemoScreen(),
         '/stateless-stateful-demo': (context) => const StatelessStatefulDemoScreen(),
         '/home': (context) => const HomeScreen(),
+        '/scan': (context) => const PlantScanScreen(),
+        '/add-plant': (context) => const AddPlantScreen(),
+        '/my-plants': (context) => const MyPlantsScreen(),
+        '/reminders': (context) => const RemindersScreen(),
+        '/store': (context) => const NurseryStoreScreen(),
       },
     );
   }
