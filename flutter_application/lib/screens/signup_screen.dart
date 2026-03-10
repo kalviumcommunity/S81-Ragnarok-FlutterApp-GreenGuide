@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
-import '../services/firestore_service.dart';
+
 import 'login_screen.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -16,13 +15,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-
-  final _authService = AuthService();
-  final _firestoreService = FirestoreService();
-
   bool _isLoading = false;
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
   String? _errorMessage;
 
   @override
@@ -44,52 +37,25 @@ class _SignupScreenState extends State<SignupScreen> {
       _errorMessage = null;
     });
 
-    try {
-      // Create user account
-      final userCredential = await _authService.signUp(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
+    await Future.delayed(const Duration(milliseconds: 900));
 
-      if (userCredential?.user != null) {
-        final uid = userCredential!.user!.uid;
+    if (!mounted) return;
 
-        // Update display name
-        await _authService.updateDisplayName(_nameController.text.trim());
+    setState(() {
+      _isLoading = false;
+    });
 
-        // Save user profile to Firestore
-        await _firestoreService.saveUserProfile(
-          uid: uid,
-          email: _emailController.text.trim(),
-          displayName: _nameController.text.trim(),
-        );
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Account created! Please log in.'),
+        backgroundColor: Colors.green,
+      ),
+    );
 
-        if (mounted) {
-          // Navigate to login screen
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Account created successfully! Please log in.'),
-              backgroundColor: Colors.green,
-            ),
-          );
-
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-          );
-        }
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Sign up failed: ${e.toString()}';
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+    );
   }
 
   String? _validateEmail(String? value) {
@@ -146,7 +112,6 @@ class _SignupScreenState extends State<SignupScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
                 Text(
                   'Join GreenGuide',
                   style: TextStyle(
@@ -164,9 +129,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                 ),
                 SizedBox(height: isTablet ? 32 : 24),
-
-                // Error message
-                if (_errorMessage != null)
+                if (_errorMessage != null) ...[
                   Container(
                     padding: EdgeInsets.all(isTablet ? 16 : 12),
                     decoration: BoxDecoration(
@@ -179,10 +142,8 @@ class _SignupScreenState extends State<SignupScreen> {
                       style: TextStyle(color: Colors.red[700]),
                     ),
                   ),
-                if (_errorMessage != null)
                   SizedBox(height: isTablet ? 20 : 16),
-
-                // Name field
+                ],
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(
@@ -203,8 +164,6 @@ class _SignupScreenState extends State<SignupScreen> {
                   },
                 ),
                 SizedBox(height: isTablet ? 20 : 16),
-
-                // Email field
                 TextFormField(
                   controller: _emailController,
                   decoration: InputDecoration(
@@ -221,131 +180,72 @@ class _SignupScreenState extends State<SignupScreen> {
                   validator: _validateEmail,
                 ),
                 SizedBox(height: isTablet ? 20 : 16),
-
-                // Password field
                 TextFormField(
                   controller: _passwordController,
                   decoration: InputDecoration(
                     labelText: 'Password',
-                    hintText: 'At least 6 characters',
+                    hintText: 'Enter your password',
                     prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                     filled: true,
                     fillColor: Colors.grey[50],
                   ),
-                  obscureText: _obscurePassword,
+                  obscureText: true,
                   validator: _validatePassword,
                 ),
-                SizedBox(height: isTablet ? 20 : 16),
-
-                // Confirm Password field
+                SizedBox(height: isTablet ? 16 : 12),
                 TextFormField(
                   controller: _confirmPasswordController,
                   decoration: InputDecoration(
                     labelText: 'Confirm Password',
-                    hintText: 'Re-enter your password',
                     prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureConfirmPassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscureConfirmPassword = !_obscureConfirmPassword;
-                        });
-                      },
-                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                     filled: true,
                     fillColor: Colors.grey[50],
                   ),
-                  obscureText: _obscureConfirmPassword,
+                  obscureText: true,
                   validator: _validateConfirmPassword,
                 ),
                 SizedBox(height: isTablet ? 32 : 24),
-
-                // Sign up button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _signup,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green[700],
                       padding: EdgeInsets.symmetric(
                         vertical: isTablet ? 16 : 14,
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
                     ),
+                    onPressed: _isLoading ? null : _signup,
                     child: _isLoading
                         ? const SizedBox(
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
                               strokeWidth: 2,
+                              color: Colors.white,
                             ),
                           )
-                        : Text(
-                            'Create Account',
-                            style: TextStyle(
-                              fontSize: isTablet ? 16 : 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                        : const Text('Sign Up'),
                   ),
                 ),
-                SizedBox(height: isTablet ? 24 : 16),
-
-                // Login link
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Already have an account? ',
-                      style: TextStyle(fontSize: isTablet ? 14 : 12),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const LoginScreen(),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        'Log In',
-                        style: TextStyle(
-                          fontSize: isTablet ? 14 : 12,
-                          color: Colors.green[700],
-                          fontWeight: FontWeight.bold,
-                          decoration: TextDecoration.underline,
+                SizedBox(height: isTablet ? 16 : 12),
+                Center(
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LoginScreen(),
                         ),
-                      ),
-                    ),
-                  ],
+                      );
+                    },
+                    child: const Text('Already have an account? Log in'),
+                  ),
                 ),
               ],
             ),

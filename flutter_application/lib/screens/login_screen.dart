@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
-import 'signup_screen.dart';
+
 import 'dashboard_screen.dart';
+import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,11 +14,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-
-  final _authService = AuthService();
-
   bool _isLoading = false;
-  bool _obscurePassword = true;
   String? _errorMessage;
 
   @override
@@ -38,30 +34,18 @@ class _LoginScreenState extends State<LoginScreen> {
       _errorMessage = null;
     });
 
-    try {
-      final userCredential = await _authService.login(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
+    await Future.delayed(const Duration(milliseconds: 700));
 
-      if (userCredential?.user != null && mounted) {
-        // Navigate to dashboard
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const DashboardScreen()),
-        );
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Login failed: ${e.toString()}';
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const DashboardScreen()),
+    );
   }
 
   String? _validateEmail(String? value) {
@@ -108,7 +92,6 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
                 Text(
                   'Welcome Back',
                   style: TextStyle(
@@ -126,8 +109,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 SizedBox(height: isTablet ? 32 : 24),
-
-                // Eco icon
                 Center(
                   child: Container(
                     padding: EdgeInsets.all(isTablet ? 24 : 16),
@@ -143,9 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 SizedBox(height: isTablet ? 32 : 24),
-
-                // Error message
-                if (_errorMessage != null)
+                if (_errorMessage != null) ...[
                   Container(
                     padding: EdgeInsets.all(isTablet ? 16 : 12),
                     decoration: BoxDecoration(
@@ -158,10 +137,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(color: Colors.red[700]),
                     ),
                   ),
-                if (_errorMessage != null)
                   SizedBox(height: isTablet ? 20 : 16),
-
-                // Email field
+                ],
                 TextFormField(
                   controller: _emailController,
                   decoration: InputDecoration(
@@ -178,101 +155,57 @@ class _LoginScreenState extends State<LoginScreen> {
                   validator: _validateEmail,
                 ),
                 SizedBox(height: isTablet ? 20 : 16),
-
-                // Password field
                 TextFormField(
                   controller: _passwordController,
                   decoration: InputDecoration(
                     labelText: 'Password',
                     hintText: 'Enter your password',
                     prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                     filled: true,
                     fillColor: Colors.grey[50],
                   ),
-                  obscureText: _obscurePassword,
+                  obscureText: true,
                   validator: _validatePassword,
                 ),
                 SizedBox(height: isTablet ? 32 : 24),
-
-                // Login button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green[700],
                       padding: EdgeInsets.symmetric(
                         vertical: isTablet ? 16 : 14,
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
                     ),
+                    onPressed: _isLoading ? null : _login,
                     child: _isLoading
                         ? const SizedBox(
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
                               strokeWidth: 2,
+                              color: Colors.white,
                             ),
                           )
-                        : Text(
-                            'Log In',
-                            style: TextStyle(
-                              fontSize: isTablet ? 16 : 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                        : const Text('Log In'),
                   ),
                 ),
-                SizedBox(height: isTablet ? 24 : 16),
-
-                // Sign up link
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Don\'t have an account? ',
-                      style: TextStyle(fontSize: isTablet ? 14 : 12),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const SignupScreen(),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        'Sign Up',
-                        style: TextStyle(
-                          fontSize: isTablet ? 14 : 12,
-                          color: Colors.green[700],
-                          fontWeight: FontWeight.bold,
-                          decoration: TextDecoration.underline,
+                SizedBox(height: isTablet ? 16 : 12),
+                Center(
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SignupScreen(),
                         ),
-                      ),
-                    ),
-                  ],
+                      );
+                    },
+                    child: const Text('Create an account'),
+                  ),
                 ),
               ],
             ),
